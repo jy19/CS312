@@ -73,56 +73,40 @@ namespace VisualIntelligentScissors
                     break;
                 }
 
-                //find the smallest point and proceed from there
-                Point smallest = findSmallestEdgePoint(currPoint);
+                //find the smallest point of surrounding points
 
-                //if smallest point is null, there is a dead end
-                if (smallest == null)
+                int smallestDist = int.MaxValue;
+
+                //add the surrounding points to a list for easier comparing
+                List<Point> neighborPoints = new List<Point>();
+
+                //add points in clockwise order
+                neighborPoints.Add(new Point(currPoint.X, currPoint.Y + 1)); //N
+                neighborPoints.Add(new Point(currPoint.X + 1, currPoint.Y)); //E
+                neighborPoints.Add(new Point(currPoint.X, currPoint.Y - 1)); //S
+                neighborPoints.Add(new Point(currPoint.X - 1, currPoint.Y)); //W
+
+                //for loop through points to find smallest (going through 'edges')
+                foreach (Point p in neighborPoints)
+                {
+                    //pixel weight treated as 'distance' in a weighted graph
+                    int distance = GetPixelWeight(p);
+
+                    if (isInOverlay(p) && !isSettled(p) && distance < smallestDist)
+                    {
+                        currPoint = p;
+                        smallestDist = distance;
+                    }
+                }
+
+                //if smallestDist isn't changed, that means therhe's a dead end
+                //all the points are already settled
+                if (smallestDist == int.MaxValue)
                 {
                     break;
                 }
 
-                //set current point to smallest
-                currPoint = smallest;
             }
-
-        }
-
-        public Point findSmallestEdgePoint(Point point)
-        {
-            //add the surrounding points to a list for easier comparing
-            List<Point> neighborPoints = new List<Point>();
-
-            //add points in clockwise order
-            neighborPoints.Add(new Point(point.X, point.Y + 1)); //N
-            neighborPoints.Add(new Point(point.X + 1, point.Y)); //E
-            neighborPoints.Add(new Point(point.X, point.Y - 1)); //S
-            neighborPoints.Add(new Point(point.X - 1, point.Y)); //W
-            
-            //for loop through points to find smallest (going through 'edges')
-            //first set min value to as large as possible
-            int smallestDist = int.MaxValue;
-            Point smallestPoint = new Point(0, 0);
-            foreach (Point neighbor in neighborPoints)
-            {
-                //pixel weight treated as 'distance' in a weighted graph
-                if (isInOverlay(neighbor))
-                {
-                    int distance = GetPixelWeight(neighbor);
-
-                    //if the distance is smallest, and that point isn't settled, and that point is in bounds
-                    //if (isInOverlay(neighbor) && distance < smallestDist && !isSettled(neighbor))
-                    if (distance < smallestDist && !isSettled(neighbor))
-                    {
-                        smallestDist = distance;
-                        smallestPoint = neighbor;
-                    }
-                }
-                
-
-            }
-
-            return smallestPoint;
 
         }
 
