@@ -38,16 +38,31 @@ namespace VisualIntelligentScissors
             // the points
             
 			if (Image == null) throw new InvalidOperationException("Set Image property first.");
-            
+
+            colorPoints(points);
             //go point by point
             for (int i = 0; i < points.Count-1; i++ )
             {
                 simpleScissors(points[i], points[(i + 1) % points.Count]);
             }
-            //final one between last point and first point
-            //simpleScissors(points[points.Count - 1], points[0]);
 			
 		}
+
+        //color the points on image, code taken from straightscissors.cs
+        public void colorPoints(IList<Point> points)
+        {
+            Pen yellowpen = new Pen(Color.Yellow);
+            using (Graphics g = Graphics.FromImage(Overlay))
+            {
+                for (int i = 0; i < points.Count; i++)
+                {
+                    Point start = points[i];
+                    Point end = points[(i + 1) % points.Count];
+                    g.DrawEllipse(yellowpen, start.X, start.Y, 5, 5);
+                }
+            }
+            
+        }
 
         //greedy algorithm for finding the next point
         public void simpleScissors(Point start, Point goal)
@@ -58,9 +73,8 @@ namespace VisualIntelligentScissors
 
             while (!foundGoal)
             {
-                Console.WriteLine(currPoint);
                 //set pixel in overlay
-                Overlay.SetPixel(currPoint.X, currPoint.Y, Color.Yellow);
+                Overlay.SetPixel(currPoint.X, currPoint.Y, Color.Red);
 
                 //add the current point into settled
                 settled.Add(currPoint);
