@@ -3,6 +3,8 @@ using System.Diagnostics;
 using System.Collections.Generic;
 using System.Drawing;
 
+using System.Linq;
+
 namespace VisualIntelligentScissors
 {
 	public class SimpleScissors : Scissors
@@ -15,6 +17,12 @@ namespace VisualIntelligentScissors
         /// <param name="image">the image you are going to segment including methods for getting gradients.</param>
         /// <param name="overlay">a bitmap on which you can draw stuff.</param>
 		public SimpleScissors(GrayBitmap image, Bitmap overlay) : base(image, overlay) { }
+
+        //list of points that have been settled
+        List<Point> settled = new List<Point>();
+
+        //list of points that have been visited
+        List<Point> visited = new List<Point>();
 
         // this is a class you need to implement in CS 312. 
 
@@ -31,7 +39,108 @@ namespace VisualIntelligentScissors
             
 			if (Image == null) throw new InvalidOperationException("Set Image property first.");
             
-			throw new NotImplementedException();
+            //go point by point
+            for (int i = 0; i < points.Count-1; i++ )
+            {
+                simpleScissors(points[i], points[(i + 1) % points.Count]);
+            }
+            //final one between last point and first point
+            //simpleScissors(points[points.Count - 1], points[0]);
+			
 		}
+
+        //greedy algorithm for finding the next point
+        public void simpleScissors(Point start, Point goal)
+        {
+            Boolean foundGoal = false;
+            Point currPoint = start;
+            
+
+            while (!foundGoal)
+            {
+                Console.WriteLine(currPoint);
+                //set pixel in overlay
+                Overlay.SetPixel(currPoint.X, currPoint.Y, Color.Yellow);
+
+                //add the current point into settled
+                settled.Add(currPoint);
+
+                //end point is found, return
+                //if(currPoint.Equals(goal))
+                if(Point.Equals(currPoint, goal))
+                {
+                    foundGoal = true;
+                    break;
+                }
+
+                //find the smallest point and proceed from there
+                Point smallest = findSmallestEdgePoint(currPoint);
+
+                //if smallest point is null, there is a dead end
+                if (smallest == null)
+                {
+                    break;
+                }
+
+                //set current point to smallest
+                currPoint = smallest;
+            }
+
+        }
+
+        public Point findSmallestEdgePoint(Point point)
+        {
+            //add the surrounding points to a list for easier comparing
+            List<Point> neighborPoints = new List<Point>();
+
+            //add points in clockwise order
+            neighborPoints.Add(new Point(point.X, point.Y + 1)); //N
+            neighborPoints.Add(new Point(point.X + 1, point.Y)); //E
+            neighborPoints.Add(new Point(point.X, point.Y - 1)); //S
+            neighborPoints.Add(new Point(point.X - 1, point.Y)); //W
+            
+            //for loop through points to find smallest (going through 'edges')
+            //first set min value to as large as possible
+            int smallestDist = int.MaxValue;
+            Point smallestPoint = new Point(0, 0);
+            foreach (Point neighbor in neighborPoints)
+            {
+                //pixel weight treated as 'distance' in a weighted graph
+                if (isInOverlay(neighbor))
+                {
+                    int distance = GetPixelWeight(neighbor);
+
+                    //if the distance is smallest, and that point isn't settled, and that point is in bounds
+                    //if (isInOverlay(neighbor) && distance < smallestDist && !isSettled(neighbor))
+                    if (distance < smallestDist && !isSettled(neighbor))
+                    {
+                        smallestDist = distance;
+                        smallestPoint = neighbor;
+                    }
+                }
+                
+
+            }
+
+            return smallestPoint;
+
+        }
+
+        //check that the point is in bounds
+        public Boolean isInOverlay(Point point)
+        {
+            //checks that point is in overlay
+            return (point.X > 1  && point.X < Overlay.Width - 2
+                && point.Y > 1 && point.Y < Overlay.Height - 2);
+            
+        }
+        
+        //check that point is settled
+        public Boolean isSettled(Point point)
+        {
+            //LINQ extension method to achieve a 'contains'
+            return settled.Any(temp => temp.X == point.X && temp.Y == point.Y);
+        }
+
 	}
 }
