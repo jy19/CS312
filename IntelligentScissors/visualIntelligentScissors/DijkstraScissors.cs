@@ -66,14 +66,14 @@ namespace VisualIntelligentScissors
             
 
             //priority queue, priority is the weight/distance
-            PriorityQueue<int, Node> pq = new PriorityQueue<int, Node>();
-            //PrioQueue pq = new PrioQueue();
+            //PriorityQueue<int, Node> pq = new PriorityQueue<int, Node>();
+            PrioQueue pq = new PrioQueue();
             //create a hashset that keeps track of all points in priority queue
             HashSet<Point> parallelSet = new HashSet<Point>();
 
             Node start = new Node(null, startPoint, GetPixelWeight(startPoint));
-            pq.Enqueue(0, start);
-            //pq.Enqueue(start, 0);
+            //pq.Enqueue(0, start);
+            pq.Enqueue(start, 0);
             parallelSet.Add(start.point);
 
             //insert start into priority queue
@@ -82,12 +82,12 @@ namespace VisualIntelligentScissors
             //declare this node outside of while so can use later
             Node smallest = null;
 
-            while (!pq.IsEmpty && !foundGoal)
+            while (!pq.IsEmpty() && !foundGoal)
             {
                 Console.WriteLine("===========pq not empty and goal not found===========");
                 //go to next point with min distance, and delete from pq
-                Node u = pq.DequeueValue();
-                //Node u = (Node)pq.Dequeue();
+                //Node u = pq.DequeueValue();
+                Node u = (Node)pq.Dequeue();
                 parallelSet.Remove(u.point);
                 Console.WriteLine("---------parallel set------------------");
                 foreach (Point p in parallelSet)
@@ -95,6 +95,8 @@ namespace VisualIntelligentScissors
                     Console.WriteLine(p);
                 }
 
+                Overlay.SetPixel(u.point.X, u.point.Y, Color.Beige);
+                Program.MainForm.RefreshImage();
                 //put u in settled set
                 settled.Add(u.point);
 
@@ -120,8 +122,8 @@ namespace VisualIntelligentScissors
                         int weight = u.weight + GetPixelWeight(neighbor);
                         //create node of smallest distance
                         Node currNode = new Node(u, neighbor, weight);
-                        pq.Enqueue(weight, currNode);
-                        //pq.Enqueue(currNode, weight);
+                        //pq.Enqueue(weight, currNode);
+                        pq.Enqueue(currNode, weight);
                         parallelSet.Add(currNode.point);
                         //insert new node into settled
                         settled.Add(currNode.point);
@@ -235,79 +237,79 @@ namespace VisualIntelligentScissors
     }
 
 
-    //public class PrioQueue
-    //{
-    //    int total_size;
-    //    SortedDictionary<int, Queue> storage;
+    public class PrioQueue
+    {
+        int total_size;
+        SortedDictionary<int, Queue> storage;
 
-    //    public PrioQueue()
-    //    {
-    //        this.storage = new SortedDictionary<int, Queue>();
-    //        this.total_size = 0;
-    //    }
+        public PrioQueue()
+        {
+            this.storage = new SortedDictionary<int, Queue>();
+            this.total_size = 0;
+        }
 
-    //    public bool IsEmpty()
-    //    {
-    //        return (total_size == 0);
-    //    }
+        public bool IsEmpty()
+        {
+            return (total_size == 0);
+        }
 
-    //    public object Dequeue()
-    //    {
-    //        if (IsEmpty())
-    //        {
-    //            throw new Exception("Please check that priorityQueue is not empty before dequeing");
-    //        }
-    //        else
-    //            foreach (Queue q in storage.Values)
-    //            {
-    //                // we use a sorted dictionary
-    //                if (q.Count > 0)
-    //                {
-    //                    total_size--;
-    //                    return q.Dequeue();
-    //                }
-    //            }
+        public object Dequeue()
+        {
+            if (IsEmpty())
+            {
+                throw new Exception("Please check that priorityQueue is not empty before dequeing");
+            }
+            else
+                foreach (Queue q in storage.Values)
+                {
+                    // we use a sorted dictionary
+                    if (q.Count > 0)
+                    {
+                        total_size--;
+                        return q.Dequeue();
+                    }
+                }
 
-    //        Debug.Assert(false, "not supposed to reach here. problem with changing total_size");
+            Debug.Assert(false, "not supposed to reach here. problem with changing total_size");
 
-    //        return null; // not supposed to reach here.
-    //    }
+            return null; // not supposed to reach here.
+        }
 
-    //    // same as above, except for peek.
+        // same as above, except for peek.
 
-    //    public object Peek()
-    //    {
-    //        if (IsEmpty())
-    //            throw new Exception("Please check that priorityQueue is not empty before peeking");
-    //        else
-    //            foreach (Queue q in storage.Values)
-    //            {
-    //                if (q.Count > 0)
-    //                    return q.Peek();
-    //            }
+        public object Peek()
+        {
+            if (IsEmpty())
+                throw new Exception("Please check that priorityQueue is not empty before peeking");
+            else
+                foreach (Queue q in storage.Values)
+                {
+                    if (q.Count > 0)
+                        return q.Peek();
+                }
 
-    //        Debug.Assert(false, "not supposed to reach here. problem with changing total_size");
+            Debug.Assert(false, "not supposed to reach here. problem with changing total_size");
 
-    //        return null; // not supposed to reach here.
-    //    }
+            return null; // not supposed to reach here.
+        }
 
-    //    public object Dequeue(int prio)
-    //    {
-    //        total_size--;
-    //        return storage[prio].Dequeue();
-    //    }
+        public object Dequeue(int prio)
+        {
+            total_size--;
+            return storage[prio].Dequeue();
+        }
 
-    //    public void Enqueue(object item, int prio)
-    //    {
-    //        if (!storage.ContainsKey(prio))
-    //        {
-    //            storage.Add(prio, new Queue());
-    //        }
-    //        storage[prio].Enqueue(item);
-    //        total_size++;
+        public void Enqueue(object item, int prio)
+        {
+            if (!storage.ContainsKey(prio))
+            {
+                storage.Add(prio, new Queue());
+            }
+            storage[prio].Enqueue(item);
+            total_size++;
 
-    //    }
-    //}
+        }
+    }
 
     //----------------------------------------------
     //priority queue based on a heap structure
