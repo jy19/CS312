@@ -18,7 +18,7 @@ namespace VisualIntelligentScissors
 		public DijkstraScissors(GrayBitmap image, Bitmap overlay) : base(image, overlay) { }
 
         // this is the class you need to implement in CS 312
-        public List<Point> settled = new List<Point>();
+        //public HashSet<Point> settled = new HashSet<Point>();
         /// <summary>
         /// this is the class you implement in CS 312. 
         /// </summary>
@@ -37,8 +37,12 @@ namespace VisualIntelligentScissors
             //go point by point
             for (int i = 0; i < points.Count - 1; i++)
             {
-                dijkstraScissors(points[i], points[(i + 1) % points.Count]);
+                //dijkstraScissors(points[i], points[(i + 1) % points.Count]);
+                dijkstraScissors(points[i], points[i + 1]);
+                Program.MainForm.RefreshImage();
             }
+            //go from last to first point
+            dijkstraScissors(points[points.Count - 1], points[0]);
             Program.MainForm.RefreshImage();
 			//throw new NotImplementedException();
 		}
@@ -61,19 +65,14 @@ namespace VisualIntelligentScissors
 
         public void dijkstraScissors(Point startPoint, Point goalPoint)
         {
-            Console.WriteLine("-----goal-------------  " + goalPoint);
-            //List<Node> settled = new List<Node>(); //list of settled points
-            
-
+            HashSet<Point> settled = new HashSet<Point>(); //set pf settled points
             //priority queue, priority is the weight/distance
-            //PriorityQueue<int, Node> pq = new PriorityQueue<int, Node>();
-            PrioQueue pq = new PrioQueue();
+            PriorityQueue<int, Node> pq = new PriorityQueue<int, Node>();
             //create a hashset that keeps track of all points in priority queue
             HashSet<Point> parallelSet = new HashSet<Point>();
 
             Node start = new Node(null, startPoint, GetPixelWeight(startPoint));
-            //pq.Enqueue(0, start);
-            pq.Enqueue(start, 0);
+            pq.Enqueue(0, start);
             parallelSet.Add(start.point);
 
             //insert start into priority queue
@@ -82,21 +81,14 @@ namespace VisualIntelligentScissors
             //declare this node outside of while so can use later
             Node smallest = null;
 
-            while (!pq.IsEmpty() && !foundGoal)
+            while (!pq.IsEmpty && !foundGoal)
             {
-                Console.WriteLine("===========pq not empty and goal not found===========");
+               
                 //go to next point with min distance, and delete from pq
-                //Node u = pq.DequeueValue();
-                Node u = (Node)pq.Dequeue();
+                Node u = pq.DequeueValue();
+                
                 parallelSet.Remove(u.point);
-                Console.WriteLine("---------parallel set------------------");
-                foreach (Point p in parallelSet)
-                {
-                    Console.WriteLine(p);
-                }
-
-                Overlay.SetPixel(u.point.X, u.point.Y, Color.Beige);
-                Program.MainForm.RefreshImage();
+                
                 //put u in settled set
                 settled.Add(u.point);
 
@@ -106,10 +98,8 @@ namespace VisualIntelligentScissors
                 //go through all of u's neighbors
                 foreach (Point neighbor in neighborPoints)
                 {
-                    Console.WriteLine("current point.." + neighbor);
                     //if neighbor is same as goal point, goal is found
                     if(Point.Equals(neighbor, goalPoint)) {
-                        Console.WriteLine("neighbor and goal point equal!!!!");
                         foundGoal = true;
                         int currWeight = u.weight + GetPixelWeight(neighbor);
                         //set earlier node new found node
@@ -122,8 +112,7 @@ namespace VisualIntelligentScissors
                         int weight = u.weight + GetPixelWeight(neighbor);
                         //create node of smallest distance
                         Node currNode = new Node(u, neighbor, weight);
-                        //pq.Enqueue(weight, currNode);
-                        pq.Enqueue(currNode, weight);
+                        pq.Enqueue(weight, currNode);
                         parallelSet.Add(currNode.point);
                         //insert new node into settled
                         settled.Add(currNode.point);
@@ -134,39 +123,16 @@ namespace VisualIntelligentScissors
 
             //use the last node found to trace a path backwards to start using prev pointers
             while(smallest != null) {
-                Console.WriteLine("smallest not null?");
                 Overlay.SetPixel(smallest.point.X, smallest.point.Y, Color.Red);
                 smallest = smallest.prev;
             }
 
-            //clear out settled 
-            //settled.Clear();
         }
 
         public List<Point> getNeighbors(Point point)
         {
             List<Point> neighbors = new List<Point>();
             //add points in clockwise order
-            //check that points are in bounds and have not yet been settled
-            //Point north = new Point(point.X, point.Y+1);
-            //if(isInOverlay(north) && !isSettled(north)) {
-            //    neighbors.Add(north);
-            //}
-            //Point east = new Point(point.X + 1, point.Y);
-            //if (isInOverlay(east) && !isSettled(east))
-            //{
-            //    neighbors.Add(east);
-            //}
-            //Point south = new Point(point.X, point.Y - 1);
-            //if (isInOverlay(south) && !isSettled(south))
-            //{
-            //    neighbors.Add(south);
-            //}
-            //Point west = new Point(point.X - 1, point.Y);
-            //if (isInOverlay(west) && !isSettled(west))
-            //{
-            //    neighbors.Add(west);
-            //}
             Point north = new Point(point.X, point.Y + 1);
             if (isInOverlay(north))
             {
@@ -200,12 +166,6 @@ namespace VisualIntelligentScissors
 
         }
 
-        //check that point is settled
-        //public Boolean isSettled(Point point)
-        //{
-        //    //LINQ extension method to achieve a 'contains'
-        //    return settled.Any(temp => temp.point.X == point.X && temp.point.Y == point.Y);
-        //}
 	}
 
     //treat each point like a node
@@ -234,81 +194,6 @@ namespace VisualIntelligentScissors
             return this.point.GetHashCode() + this.weight.GetHashCode();
         }
 
-    }
-
-
-    public class PrioQueue
-    {
-        int total_size;
-        SortedDictionary<int, Queue> storage;
-
-        public PrioQueue()
-        {
-            this.storage = new SortedDictionary<int, Queue>();
-            this.total_size = 0;
-        }
-
-        public bool IsEmpty()
-        {
-            return (total_size == 0);
-        }
-
-        public object Dequeue()
-        {
-            if (IsEmpty())
-            {
-                throw new Exception("Please check that priorityQueue is not empty before dequeing");
-            }
-            else
-                foreach (Queue q in storage.Values)
-                {
-                    // we use a sorted dictionary
-                    if (q.Count > 0)
-                    {
-                        total_size--;
-                        return q.Dequeue();
-                    }
-                }
-
-            Debug.Assert(false, "not supposed to reach here. problem with changing total_size");
-
-            return null; // not supposed to reach here.
-        }
-
-        // same as above, except for peek.
-
-        public object Peek()
-        {
-            if (IsEmpty())
-                throw new Exception("Please check that priorityQueue is not empty before peeking");
-            else
-                foreach (Queue q in storage.Values)
-                {
-                    if (q.Count > 0)
-                        return q.Peek();
-                }
-
-            Debug.Assert(false, "not supposed to reach here. problem with changing total_size");
-
-            return null; // not supposed to reach here.
-        }
-
-        public object Dequeue(int prio)
-        {
-            total_size--;
-            return storage[prio].Dequeue();
-        }
-
-        public void Enqueue(object item, int prio)
-        {
-            if (!storage.ContainsKey(prio))
-            {
-                storage.Add(prio, new Queue());
-            }
-            storage[prio].Enqueue(item);
-            total_size++;
-
-        }
     }
 
     //----------------------------------------------
@@ -385,7 +270,6 @@ namespace VisualIntelligentScissors
         {
             if (!IsEmpty)
             {
-                Console.WriteLine("Dequeing...base heap size? " + _baseHeap.Count);
                 KeyValuePair<TPriority, TValue> result = _baseHeap[0];
                 DeleteRoot();
                 return result;
