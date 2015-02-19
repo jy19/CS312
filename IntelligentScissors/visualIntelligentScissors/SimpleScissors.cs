@@ -3,7 +3,6 @@ using System.Diagnostics;
 using System.Collections.Generic;
 using System.Drawing;
 
-using System.Linq;
 
 namespace VisualIntelligentScissors
 {
@@ -106,7 +105,7 @@ namespace VisualIntelligentScissors
                     //pixel weight treated as 'distance' in a weighted graph
                     int distance = GetPixelWeight(p);
 
-                    if (isInOverlay(p) && !isSettled(p) && distance < smallestDist)
+                    if(isInOverlay(p) && !settled.Contains(p) && distance < smallestDist)
                     {
                         currPoint = p;
                         smallestDist = distance;
@@ -131,13 +130,6 @@ namespace VisualIntelligentScissors
             return (point.X > 1  && point.X < Overlay.Width - 2
                 && point.Y > 1 && point.Y < Overlay.Height - 2);
             
-        }
-        
-        //check that point is settled
-        public Boolean isSettled(Point point)
-        {
-            //LINQ extension method to achieve a 'contains'
-            return settled.Any(temp => temp.X == point.X && temp.Y == point.Y);
         }
 
 	}

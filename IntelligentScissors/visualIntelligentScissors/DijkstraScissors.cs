@@ -17,10 +17,8 @@ namespace VisualIntelligentScissors
         /// <param name="overlay">an overlay on which you can draw stuff by setting pixels.</param>
 		public DijkstraScissors(GrayBitmap image, Bitmap overlay) : base(image, overlay) { }
 
-        List<Node> settled = new List<Node>(); //list of settled points
-
         // this is the class you need to implement in CS 312
-
+        public List<Point> settled = new List<Point>();
         /// <summary>
         /// this is the class you implement in CS 312. 
         /// </summary>
@@ -64,6 +62,9 @@ namespace VisualIntelligentScissors
         public void dijkstraScissors(Point startPoint, Point goalPoint)
         {
             Console.WriteLine("-----goal-------------  " + goalPoint);
+            //List<Node> settled = new List<Node>(); //list of settled points
+            
+
             //priority queue, priority is the weight/distance
             PriorityQueue<int, Node> pq = new PriorityQueue<int, Node>();
             //PrioQueue pq = new PrioQueue();
@@ -83,18 +84,23 @@ namespace VisualIntelligentScissors
 
             while (!pq.IsEmpty && !foundGoal)
             {
+                Console.WriteLine("===========pq not empty and goal not found===========");
                 //go to next point with min distance, and delete from pq
-
                 Node u = pq.DequeueValue();
                 //Node u = (Node)pq.Dequeue();
                 parallelSet.Remove(u.point);
+                Console.WriteLine("---------parallel set------------------");
+                foreach (Point p in parallelSet)
+                {
+                    Console.WriteLine(p);
+                }
 
                 //put u in settled set
-                settled.Add(u);
+                settled.Add(u.point);
 
                 //add the surrounding points to a list for easier comparing
-                List<Point> neighborPoints = getNeighbors(start.point);
-
+                List<Point> neighborPoints = getNeighbors(u.point);
+                
                 //go through all of u's neighbors
                 foreach (Point neighbor in neighborPoints)
                 {
@@ -108,7 +114,7 @@ namespace VisualIntelligentScissors
                         smallest = new Node(u, neighbor, currWeight);
                     }
                     //check that neighbor is not settled and is not in priority queue
-                    else if(!isSettled(neighbor) && !parallelSet.Contains(neighbor))
+                    else if(!settled.Contains(neighbor) && !parallelSet.Contains(neighbor))
                     {
                         //new weight of smallest node, or distance from start to neighbor
                         int weight = u.weight + GetPixelWeight(neighbor);
@@ -118,7 +124,7 @@ namespace VisualIntelligentScissors
                         //pq.Enqueue(currNode, weight);
                         parallelSet.Add(currNode.point);
                         //insert new node into settled
-                        settled.Add(currNode);
+                        settled.Add(currNode.point);
                     }
                 }
 
@@ -132,7 +138,7 @@ namespace VisualIntelligentScissors
             }
 
             //clear out settled 
-            settled.Clear();
+            //settled.Clear();
         }
 
         public List<Point> getNeighbors(Point point)
@@ -140,22 +146,42 @@ namespace VisualIntelligentScissors
             List<Point> neighbors = new List<Point>();
             //add points in clockwise order
             //check that points are in bounds and have not yet been settled
-            Point north = new Point(point.X, point.Y+1);
-            if(isInOverlay(north) && !isSettled(north)) {
+            //Point north = new Point(point.X, point.Y+1);
+            //if(isInOverlay(north) && !isSettled(north)) {
+            //    neighbors.Add(north);
+            //}
+            //Point east = new Point(point.X + 1, point.Y);
+            //if (isInOverlay(east) && !isSettled(east))
+            //{
+            //    neighbors.Add(east);
+            //}
+            //Point south = new Point(point.X, point.Y - 1);
+            //if (isInOverlay(south) && !isSettled(south))
+            //{
+            //    neighbors.Add(south);
+            //}
+            //Point west = new Point(point.X - 1, point.Y);
+            //if (isInOverlay(west) && !isSettled(west))
+            //{
+            //    neighbors.Add(west);
+            //}
+            Point north = new Point(point.X, point.Y + 1);
+            if (isInOverlay(north))
+            {
                 neighbors.Add(north);
             }
             Point east = new Point(point.X + 1, point.Y);
-            if (isInOverlay(east) && !isSettled(east))
+            if (isInOverlay(east))
             {
                 neighbors.Add(east);
             }
             Point south = new Point(point.X, point.Y - 1);
-            if (isInOverlay(south) && !isSettled(south))
+            if (isInOverlay(south))
             {
                 neighbors.Add(south);
             }
             Point west = new Point(point.X - 1, point.Y);
-            if (isInOverlay(west) && !isSettled(west))
+            if (isInOverlay(west))
             {
                 neighbors.Add(west);
             }
@@ -173,11 +199,11 @@ namespace VisualIntelligentScissors
         }
 
         //check that point is settled
-        public Boolean isSettled(Point point)
-        {
-            //LINQ extension method to achieve a 'contains'
-            return settled.Any(temp => temp.point.X == point.X && temp.point.Y == point.Y);
-        }
+        //public Boolean isSettled(Point point)
+        //{
+        //    //LINQ extension method to achieve a 'contains'
+        //    return settled.Any(temp => temp.point.X == point.X && temp.point.Y == point.Y);
+        //}
 	}
 
     //treat each point like a node
@@ -357,6 +383,7 @@ namespace VisualIntelligentScissors
         {
             if (!IsEmpty)
             {
+                Console.WriteLine("Dequeing...base heap size? " + _baseHeap.Count);
                 KeyValuePair<TPriority, TValue> result = _baseHeap[0];
                 DeleteRoot();
                 return result;
