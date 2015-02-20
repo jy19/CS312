@@ -18,7 +18,6 @@ namespace VisualIntelligentScissors
 		public DijkstraScissors(GrayBitmap image, Bitmap overlay) : base(image, overlay) { }
 
         // this is the class you need to implement in CS 312
-        //public HashSet<Point> settled = new HashSet<Point>();
         /// <summary>
         /// this is the class you implement in CS 312. 
         /// </summary>
@@ -29,15 +28,12 @@ namespace VisualIntelligentScissors
 			if (Image == null) throw new InvalidOperationException("Set Image property first.");
             // this is the entry point for this class when the button is clicked
             // to do the image segmentation with intelligent scissors.
-            
-            //GetPixelWeight(points[1]); 
 
             colorPoints(points);
 
             //go point by point
             for (int i = 0; i < points.Count - 1; i++)
             {
-                //dijkstraScissors(points[i], points[(i + 1) % points.Count]);
                 dijkstraScissors(points[i], points[i + 1]);
                 Program.MainForm.RefreshImage();
             }

@@ -18,7 +18,7 @@ namespace VisualIntelligentScissors
 		public SimpleScissors(GrayBitmap image, Bitmap overlay) : base(image, overlay) { }
 
         //list of points that have been settled
-        List<Point> settled = new List<Point>();
+        HashSet<Point> settled = new HashSet<Point>();
 
         //list of points that have been visited
         List<Point> visited = new List<Point>();
