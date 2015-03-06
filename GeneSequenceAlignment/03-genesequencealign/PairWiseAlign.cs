@@ -79,11 +79,13 @@ namespace GeneticsLab
         public int scoring(string sequenceA, string sequenceB)
         {
             
-            List<int> prevRow = new List<int>();
-            List<int> currRow = new List<int>();
+            //List<int> prevRow = new List<int>();
+            //List<int> currRow = new List<int>();
+            int [] prevRow = new int [5001];
+            int [] currRow = new int[5001];
 
             //align only the first 5000 chars
-            //if sequence A or B is longer than 5001 chars (extra one because going up to 5000)
+            //if sequence A or B is longer than 5001 chars (extra one because added "-" at front)
             int aLength = (sequenceA.Length > MaxCharactersToAlign + 1) ? MaxCharactersToAlign + 1 : sequenceA.Length;
             int bLength = (sequenceB.Length > MaxCharactersToAlign + 1) ? MaxCharactersToAlign + 1: sequenceB.Length;
 
@@ -91,7 +93,7 @@ namespace GeneticsLab
             {
                 for (int j = 0; j < bLength; j++ )
                 {
-                    //calculating cost of one ahead of j
+                    //calculating cost
                     int cost = int.MaxValue;
                     if (i <= 0 && j <= 0)
                     {
@@ -131,24 +133,31 @@ namespace GeneticsLab
                         }
                     }
                     //add cost to currRow
-                    currRow.Add(cost);
+                    //currRow.Add(cost);
+                    currRow[j] = cost;
                 }
 
                 //make prev row curr row
-                prevRow = currRow;
+                //prevRow = currRow;
+                currRow.CopyTo(prevRow, 0);
 
                 //curr row is now a new row
-                currRow = new List<int>();
+                //currRow = new List<int>();
+                currRow = new int[5001];
             }
 
             //the optimal cost
-            int optCost = prevRow[prevRow.Count - 1];
+            // int optCost = prevRow[prevRow.Count - 1];
+            int optCost = prevRow[prevRow.Length - 1];
 
             return optCost;
 
         }
-        
 
+        public void extractSolution(string sequenceA, string sequenceB)
+        {
+
+        }
         public int fillDPTable(string sequenceA, string sequenceB, int i, int j, int[][] dp)
         {
             int min = int.MaxValue;
