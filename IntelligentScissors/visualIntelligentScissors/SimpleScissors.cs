@@ -18,7 +18,7 @@ namespace VisualIntelligentScissors
 		public SimpleScissors(GrayBitmap image, Bitmap overlay) : base(image, overlay) { }
 
         //list of points that have been settled
-        List<Point> settled = new List<Point>();
+        HashSet<Point> settled = new HashSet<Point>();
 
         //list of points that have been visited
         List<Point> visited = new List<Point>();
@@ -40,10 +40,15 @@ namespace VisualIntelligentScissors
 
             colorPoints(points);
             //go point by point
-            for (int i = 0; i < points.Count-1; i++ )
+            for (int i = 0; i < points.Count - 1; i++)
             {
-                simpleScissors(points[i], points[(i + 1) % points.Count]);
+                //dijkstraScissors(points[i], points[(i + 1) % points.Count]);
+                simpleScissors(points[i], points[i + 1]);
+                Program.MainForm.RefreshImage();
             }
+            //go from last to first point
+            simpleScissors(points[points.Count - 1], points[0]);
+            Program.MainForm.RefreshImage();
 			
 		}
 
