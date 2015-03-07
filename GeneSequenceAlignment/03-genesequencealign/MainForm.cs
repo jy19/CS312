@@ -59,5 +59,17 @@ namespace GeneticsLab
             statusMessage.Text = "Done.  Time taken: " + timer.Elapsed;
 
         }
+
+        private void dataGridViewResults_CellMouseClick(object sender, DataGridViewCellMouseEventArgs e)
+        {
+            PairWiseAlign alignObj = new PairWiseAlign();
+            List<string> results = alignObj.extractSolution(m_sequences[e.RowIndex], m_sequences[e.ColumnIndex], e.RowIndex, e.ColumnIndex);
+ 
+            //textBox1 - the upper textBox
+            textBox1.Text = results[0];
+            //textBox 2 - the lower textBox
+            textBox2.Text = results[1];
+        }
+
     }
 }

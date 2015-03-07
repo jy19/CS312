@@ -78,11 +78,11 @@ namespace GeneticsLab
 
         public int scoring(string sequenceA, string sequenceB)
         {
-            
-            //List<int> prevRow = new List<int>();
-            //List<int> currRow = new List<int>();
-            int [] prevRow = new int [5001];
-            int [] currRow = new int[5001];
+
+            List<int> prevRow = new List<int>();
+            List<int> currRow = new List<int>();
+            //int [] prevRow = new int [5001];
+            //int [] currRow = new int[5001];
 
             //align only the first 5000 chars
             //if sequence A or B is longer than 5001 chars (extra one because added "-" at front)
@@ -133,70 +133,204 @@ namespace GeneticsLab
                         }
                     }
                     //add cost to currRow
-                    //currRow.Add(cost);
-                    currRow[j] = cost;
+                    currRow.Add(cost);
+                    //currRow[j] = cost;
                 }
 
                 //make prev row curr row
-                //prevRow = currRow;
-                currRow.CopyTo(prevRow, 0);
+                prevRow = currRow;
+                //currRow.CopyTo(prevRow, 0);
 
                 //curr row is now a new row
-                //currRow = new List<int>();
-                currRow = new int[5001];
+                currRow = new List<int>();
+                //currRow = new int[5001];
             }
 
             //the optimal cost
-            // int optCost = prevRow[prevRow.Count - 1];
-            int optCost = prevRow[prevRow.Length - 1];
+             int optCost = prevRow[prevRow.Count - 1];
+            //int optCost = prevRow[prevRow.Length - 1];
 
             return optCost;
 
         }
 
-        public void extractSolution(string sequenceA, string sequenceB)
-        {
+        public List<string> extractSolution(GeneSequence sequenceA, GeneSequence sequenceB, int row, int col) {
 
-        }
-        public int fillDPTable(string sequenceA, string sequenceB, int i, int j, int[][] dp)
-        {
-            int min = int.MaxValue;
-            if(i <= 0 && j <= 0)
-            {
-                min = 0;
+            List<string> solutions = new List<string>();
+
+            string seqA = sequenceA.Sequence;
+            string seqB = sequenceB.Sequence;
+
+            Console.WriteLine(seqA);
+            Console.WriteLine(seqB);
+
+            //for final strings
+            StringBuilder aString = new StringBuilder();
+            StringBuilder bString = new StringBuilder();
+
+            seqA = "-" + seqA;
+            seqB = "-" + seqB;
+
+            if(seqA.Length > 101) {
+                seqA = seqA.Substring(0, 101);
             }
-            else if(i <= 0 && j > 0) 
-            {
-                min = dp[i][j-1] + C_INDEL;
+
+            if(seqB.Length > 101) {
+                seqB = seqB.Substring(0, 101);
             }
-            else if(i > 0 && j <= 0) 
+            //same sequence
+            if(row == col) 
             {
-                min = dp[i - 1][j] + C_INDEL;
+                //return the same thing
+                solutions.Add(formatString(seqA));
+                solutions.Add(formatString(seqB));
+
+                return solutions;
             }
-            else{
-                //start off with match, usually smallest cost
-                if(sequenceA[i] == sequenceB[j]) 
-                {
-                    min = dp[i - 1][j - 1] + C_MATCH;
-                }
-                //check other possibilities, where sequenceA[i] != sequenceB[j]
-                else
-                {
-                    if(min > dp[i-1][j-1] + C_SUB) {
-                        min = dp[i - 1][j - 1] + C_SUB;
-                    }
-                    if(min > dp[i-1][j] + C_INDEL) {
-                        min = dp[i - 1][j] + C_INDEL;
-                    }
-                    if(min > dp[i][j-1] + C_INDEL) 
+            else //calculate and extract 
+            {
+                //List<List<Tuple<int, int>>> backPointers = new List<List<Tuple<int, int>>>();
+                Tuple<int, int>[,] backPointers = new Tuple<int, int>[101, 101];
+                int[,] dpCost = new int[101, 101];
+                //List<List<int>> dpCost = new List<List<int>>();
+
+                calcBackPointers(seqA, seqB, backPointers, dpCost);
+
+                //start off at end point
+                var currPos = Tuple.Create(seqA.Length - 1, seqB.Length - 1);
+                //while (currPos != null) { 
+                while((currPos.Item1  != 0 && currPos.Item2 != 0) && currPos != null) {
+                    int x = currPos.Item1;
+                    int y = currPos.Item2;
+
+                    //Console.WriteLine(x + ", " + y);
+
+                    if(dpCost[x, y] == dpCost[x, y -1] + C_INDEL) 
                     {
-                        min = dp[i][j-1] + C_INDEL;
-                    }
+                        aString.Append('-');
+                        bString.Append(seqB[y - 1]);
                         
+                    }
+                    else if(dpCost[x, y] == dpCost[x -1, y] + C_INDEL)
+                    {
+                        aString.Append(seqA[x - 1]);
+                        bString.Append('-');
+                    }
+                    else if(dpCost[x, y] == dpCost[x-1, y-1] + C_MATCH ||
+                            dpCost[x, y] == dpCost[x - 1, y - 1] + C_SUB) 
+                    {
+                        aString.Append(seqA[x - 1]);
+                        bString.Append(seqA[y - 1]);
+                    }
+                    else
+                    {
+                        //error
+                    }
+
+                    currPos = backPointers[x, y];
                 }
+
+                string a = formatString(aString.ToString());
+                string b = formatString(bString.ToString());
+
+                solutions.Add(a);
+                solutions.Add(b);
+                return solutions;
             }
 
-            return min;
+            
+         }
+
+        public string formatString(string seq) {
+            //remove initial '-'
+            seq = seq.Substring(0, seq.Length-1);
+            char[] charArray = seq.ToCharArray();
+            Array.Reverse(charArray);
+            return new string(charArray);
         }
+
+        public void calcBackPointers(String seqA, String seqB, Tuple<int, int>[,] backPointers, int[,] dpCost)
+        {
+            
+
+            int charactersToExtract = 100;
+
+            int aLength = (seqA.Length > charactersToExtract + 1) ? charactersToExtract + 1 : seqA.Length;
+            int bLength = (seqB.Length > charactersToExtract + 1) ? charactersToExtract + 1 : seqB.Length;
+
+
+            for (int i = 0; i < aLength; i++)
+            {
+                for (int j = 0; j < bLength; j++)
+                {
+                    if (i <= 0 && j <= 0)
+                    {
+                        dpCost[i,j] = 0;
+                        backPointers[i, j] = null; //no back pointers at (0,0)
+                    }
+                    else if (i <= 0 && j > 0)
+                    {
+                        dpCost[i,j] = dpCost[i,j - 1] + C_INDEL;
+                        backPointers[i, j] = Tuple.Create(i, j - 1);
+                    }
+                    else if (i > 0 && j <= 0)
+                    {
+                        dpCost[i,j] = dpCost[i - 1, j] + C_INDEL;
+                        backPointers[i, j] = Tuple.Create(i - 1, j);
+                    }
+                    else //i > 0 and j > 0
+                    {
+                        //when sequenceA[i] == sequenceB[j]
+                        if (seqA[i] == seqB[j])
+                        {
+
+                            //start off with match
+                            int min = int.MaxValue;
+                            if (min > dpCost[i - 1, j - 1] + C_MATCH)
+                            {
+                                min = dpCost[i - 1, j - 1] + C_MATCH;
+                                backPointers[i, j] = Tuple.Create(i - 1, j - 1);
+                            }
+                            if (min > dpCost[i - 1, j] + C_INDEL)
+                            {
+                                min = dpCost[i - 1, j] + C_INDEL;
+                                backPointers[i, j] = Tuple.Create(i - 1, j);
+                            }
+                            if (min > dpCost[i, j - 1] + C_INDEL)
+                            {
+                                min = dpCost[i, j - 1] + C_INDEL;
+                                backPointers[i, j] = Tuple.Create(i, j - 1);
+                            }
+                            dpCost[i, j] = min;
+                        }
+                        //check other possibilities, where sequenceA[i] != sequenceB[j]
+                        else
+                        {
+
+                            //start off with sub
+                            int min = int.MaxValue;
+                            if (min > dpCost[i - 1, j - 1] + C_SUB)
+                            {
+                                min = dpCost[i - 1, j - 1] + C_SUB;
+                                backPointers[i, j] = Tuple.Create(i - 1, j - 1);
+                            }
+                            if (min > dpCost[i - 1, j] + C_INDEL)
+                            {
+                                min = dpCost[i - 1, j] + C_INDEL;
+                                backPointers[i, j] = Tuple.Create(i - 1, j);
+                            }
+                            if (min > dpCost[i, j - 1] + C_INDEL)
+                            {
+                                min = dpCost[i, j - 1] + C_INDEL;
+                                backPointers[i, j] = Tuple.Create(i, j - 1);
+                            }
+                            dpCost[i, j] = min;
+                        }
+                    }
+                }
+            }
+        }
+        
+        
     }
 }
