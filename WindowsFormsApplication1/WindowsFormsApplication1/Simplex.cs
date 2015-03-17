@@ -21,6 +21,7 @@ namespace WindowsFormsApplication1
         {
             initialize();
             solvewSimplex();
+            
             CopperText.Text = b[0].ToString();
             GoldText.Text = b[1].ToString();
             SilverText.Text = b[2].ToString();
@@ -40,19 +41,19 @@ namespace WindowsFormsApplication1
         private Tuple<double[], double> solvewSimplex()
         {
             int e; //e is the entering var
-            int l; //l is the leaving var
+
             do{
                 //if there exists an e in N such that c_e > 0
                 if (getPosE() != -1)
                 {
                     e = getPosE();
                     double dMin = double.MaxValue; //dMin is set to infinite
-                    l = -1;
+                    int l = -1; //l is the leaving var
                     foreach (int index in B)
                     {
                         if (A[index, e] > 0)
                         {
-                            double d = b[index] / A[index, e]; //delta is check ratio for current constraint
+                            double d = b[index] / A[index, e]; //d is check ratio for current constraint
                             if(d < dMin) {
                                 //update the min
                                 dMin = d;
