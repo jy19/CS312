@@ -281,7 +281,23 @@ namespace TSP
 
         public void branchAndBound()
         {
+            //clear agenda
+            //add the initial state to agenda with its bound
+
             //while pq is not empty, bssf>lb, time is less than 60s, keep running
+                //curr state is first on agenda
+                //remove first from agenda
+                //children = successors of curr state
+                //for each child in children
+                    //if no time left, break
+                    //if child.bound is better than bssf
+                        //if criterion(child)
+                            //bssf = child
+                            //prune
+                        //else
+                            //add child to agenda
+            
+            
 
             // update the cost of the tour. 
             Program.MainForm.tbCostOfTour.Text = " " + bssf.costOfRoute();
