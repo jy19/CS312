@@ -243,7 +243,7 @@ namespace TSP
         /// </summary>
         /// 
 
-        //priority queue for the agenda
+        //priority queue of states for the agenda, based on lower bound
         double bssfCost; //bssf that's not an object
         double lowerBound; //the curr lower bound
         
@@ -264,18 +264,31 @@ namespace TSP
         {
             int x;
             Route = new ArrayList(); 
-            // this is the trivial solution. 
-            for (x = 0; x < Cities.Length; x++)
-            {
-                Route.Add( Cities[Cities.Length - x -1]);
-            }
+            // use the greedy algo
+            greedySolution();
+
             // call this the best solution so far.  bssf is the route that will be drawn by the Draw method. 
+            //save the solution
             bssf = new TSPSolution(Route);
+            bssfCost = bssf.costOfRoute();
+
+            //build initial state
+
+
+            //run branch and bound
+            
+        }
+
+        public void branchAndBound()
+        {
+            //while pq is not empty, bssf>lb, time is less than 60s, keep running
+
             // update the cost of the tour. 
             Program.MainForm.tbCostOfTour.Text = " " + bssf.costOfRoute();
             // do a refresh. 
             Program.MainForm.Invalidate();
         }
+
         #endregion
     }
 }
