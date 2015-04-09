@@ -3,6 +3,7 @@ using System.Collections;
 using System.Collections.Generic;
 using System.Text;
 using System.Drawing;
+using System.Diagnostics;
 
 namespace TSP
 {
@@ -244,6 +245,7 @@ namespace TSP
         /// 
 
         //priority queue of states for the agenda, based on lower bound
+        PriorityQueue<double, TSPState> agenda;
         double bssfCost; //bssf that's not an object
         double lowerBound; //the curr lower bound
         
@@ -262,7 +264,6 @@ namespace TSP
 
         public void solveProblem()
         {
-            int x;
             Route = new ArrayList(); 
             // use the greedy algo
             greedySolution();
@@ -272,30 +273,62 @@ namespace TSP
             bssf = new TSPSolution(Route);
             bssfCost = bssf.costOfRoute();
 
-            //build initial state
-
-
             //run branch and bound
             
         }
 
         public void branchAndBound()
         {
-            //clear agenda
+            if(!agenda.IsEmpty)
+            {
+                //if agenda is not empty, clear it
+                agenda.clearPQ();
+            }
+            //build initial state
+            TSPState initialState = null;
             //add the initial state to agenda with its bound
+            agenda.Enqueue(initialState.lowerBound, initialState);
 
+            //use stopwatch for time
+            Stopwatch stopWatch = new Stopwatch();
+            stopWatch.Start();
+            int maxTime = 60000;
             //while pq is not empty, bssf>lb, time is less than 60s, keep running
-                //curr state is first on agenda
-                //remove first from agenda
+            while(!agenda.IsEmpty && bssfCost > lowerBound && stopWatch.ElapsedMilliseconds < maxTime) 
+            {
+                //curr state is first on agenda, also remove first on agenda
+                TSPState currState = agenda.DequeueValue();
                 //children = successors of curr state
-                //for each child in children
+                List<TSPState> children = generateChildrenStates(currState);
+                foreach (TSPState child in children)
+                {
                     //if no time left, break
+                    if(stopWatch.ElapsedMilliseconds > maxTime) 
+                    {
+                        break;
+                    }
                     //if child.bound is better than bssf
+                    if(child.lowerBound < bssfCost) 
+                    {
                         //if criterion(child)
+                        if(child.cost < bssfCost) 
+                        {
                             //bssf = child
+                            //bssf = new TSPSolution(child.pathSoFar);
                             //prune
-                        //else
+                        }
+                        else 
+                        {
                             //add child to agenda
+                            agenda.Enqueue(child.lowerBound, child);
+                        }
+                        
+                    }
+                        
+                }
+                    
+            }
+                
             
             
 
@@ -368,7 +401,7 @@ namespace TSP
             return lb;
         }
 
-        public List<TSPState> generateChildrenStates()
+        public List<TSPState> generateChildrenStates(TSPState parentState)
         {
             return null;
         }

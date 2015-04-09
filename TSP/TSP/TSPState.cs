@@ -8,13 +8,13 @@ namespace TSP
     class TSPState
     {
         //the matrix of the state
-        private double[,] state {get; set;} 
+        public double[,] state {get; set;} 
         //the lower bound of this state
-        private double lowerBound {get; set;}
+        public double lowerBound { get; set; }
         //the cost of this state (the bssf at this state)?
-        private double cost {get; set;}
+        public double cost { get; set; }
         //the path so far
-        private List<City> pathSoFar { get; set; }
+        public List<City> pathSoFar { get; set; }
 
         public TSPState(double[,] state, double lowerBound, double cost, List<City>pathSoFar)
         {

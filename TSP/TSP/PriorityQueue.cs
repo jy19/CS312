@@ -149,5 +149,13 @@ namespace TSP
         {
             get { return _baseHeap.Count == 0; }
         }
+
+        public void clearPQ()
+        {
+            while(!this.IsEmpty) 
+            {
+                this.Dequeue();
+            }
+        }
     }
 }
