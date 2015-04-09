@@ -305,6 +305,17 @@ namespace TSP
             Program.MainForm.Invalidate();
         }
 
+        public double calcLowerBound()
+        {
+            //calculate the lower bound with reduced cost matrix
+            return 0;
+        }
+
+        public List<TSPState> generateChildrenStates()
+        {
+            return null;
+        }
+
         #endregion
     }
 }
