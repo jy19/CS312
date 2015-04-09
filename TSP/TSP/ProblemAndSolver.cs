@@ -305,10 +305,67 @@ namespace TSP
             Program.MainForm.Invalidate();
         }
 
+
+        //--------------------------------------
+        //method to generate the 2d array ('matrix') that represents a state
+        //--------------------------------------
+        public double[,] generateMatrix()
+        {
+            double[,] matrix = new double[Cities.Length, Cities.Length];
+            for (int i = 0; i < Cities.Length; i++ )
+            {
+                for(int j = 0; j < Cities.Length j++) 
+                {
+                    if(i == j) 
+                    {
+                        //if a city goes to itself, assign the distance as infinite (impossible)
+                        matrix[i, j] = double.MaxValue;
+                    }
+                    else
+                    {
+                        //else assign it the cost of getting there from i to j
+                        matrix[i, j] = Cities[i].costToGetTo(Cities[j]);
+                    }
+                }
+            }
+            return matrix;
+        }
+
         public double calcLowerBound()
         {
-            //calculate the lower bound with reduced cost matrix
-            return 0;
+            //calculate the lower bound as reduced cost matrix
+            double lb = 0;
+
+            //rows
+            for (int i = 0; i < Cities.GetLength(0); i++ )
+            {
+                double rowMin = double.MaxValue;
+                for (int j = 0; j < Cities.GetLength(1); j++ )
+                {
+                    double currCost = Cities[i].costToGetTo(Cities[j]);
+                    if(currCost < rowMin) {
+                        rowMin = currCost;
+                    }
+                }
+                lb += rowMin;
+            }
+
+            //columns
+            for (int i = 0; i < Cities.GetLength(1); i++ )
+            {
+                double colMin = double.MaxValue;
+                for (int j = 0; j < Cities.GetLength(0); j++ )
+                {
+                    double currCost = Cities[i].costToGetTo(Cities[j]);
+                    if(currCost < colMin) 
+                    {
+                        colMin = currCost;
+                    }
+                }
+                lb += colMin;
+            }
+
+            return lb;
         }
 
         public List<TSPState> generateChildrenStates()
