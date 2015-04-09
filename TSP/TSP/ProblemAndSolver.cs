@@ -440,8 +440,18 @@ namespace TSP
         //--------------------------------------
         public List<TSPState> generateChildrenStates(TSPState parentState)
         {
-
-            return null;
+            List<TSPState> children = new List<TSPState>();
+            //go through array for 0s
+                //include an edge: 
+                //if matrix[i][j] at row i contains a 0
+                    //if that 0 is the only 0 in its column
+                    //replace row i with infinities
+                //exclude an edge:
+                //at matrix[i][j], add smallelst entries in row i and column j to bound
+                //store possibility
+            //find one with greatest right bound and least left bound
+            //add those states to children
+            return children;
         }
 
         //--------------------------------------
