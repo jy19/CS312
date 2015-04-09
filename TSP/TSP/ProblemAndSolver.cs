@@ -277,6 +277,9 @@ namespace TSP
             
         }
 
+        //--------------------------------------
+        //branch and bound with lazy pruning
+        //--------------------------------------
         public void branchAndBound()
         {
             if(!agenda.IsEmpty)
@@ -285,7 +288,11 @@ namespace TSP
                 agenda.clearPQ();
             }
             //build initial state
-            TSPState initialState = null;
+            double[][] initCostMatrix = generateInitMatrix();
+            TSPState initialState = new TSPState(initCostMatrix, 0, new List<City>());
+            //reduce the cost matrix/initialize lower bound
+            calcLowerBound(initialState);
+
             //add the initial state to agenda with its bound
             agenda.Enqueue(initialState.lowerBound, initialState);
 
@@ -298,40 +305,43 @@ namespace TSP
             {
                 //curr state is first on agenda, also remove first on agenda
                 TSPState currState = agenda.DequeueValue();
-                //children = successors of curr state
-                List<TSPState> children = generateChildrenStates(currState);
-                foreach (TSPState child in children)
+                if(currState.lowerBound < bssfCost)
                 {
-                    //if no time left, break
-                    if(stopWatch.ElapsedMilliseconds > maxTime) 
+                    //children = successors of curr state
+                    List<TSPState> children = generateChildrenStates(currState);
+                    foreach (TSPState child in children)
                     {
-                        break;
-                    }
-                    //if child.bound is better than bssf
-                    if(child.lowerBound < bssfCost) 
-                    {
-                        //if criterion(child)
-                        if(child.cost < bssfCost) 
-                        {
-                            //bssf = child
-                            //bssf = new TSPSolution(child.pathSoFar);
-                            //prune
-                        }
-                        else 
-                        {
-                            //add child to agenda
-                            agenda.Enqueue(child.lowerBound, child);
-                        }
+                        //if no time left, break
+                        if (stopWatch.ElapsedMilliseconds > maxTime) { break; }
                         
-                    }
-                        
-                }
-                    
-            }
-                
-            
-            
+                        //if child.bound is better than bssf
+                        if (child.lowerBound < bssfCost)
+                        {
+                            //if child has all the cities
+                            if (child.pathSoFar.Count == Cities.Length)
+                            {
+                                //possible new bssf
+                                TSPSolution possibleSolution = new TSPSolution(new ArrayList(child.pathSoFar));
+                                double newCost = possibleSolution.costOfRoute();
+                                if (newCost < bssfCost)
+                                {
+                                    bssf = possibleSolution;
+                                    bssfCost = newCost;
+                                }
+                            }
+                            else
+                            {
+                                //add child to agenda
+                                agenda.Enqueue(child.lowerBound, child);
+                            }
 
+                        }
+
+                    }
+                }
+                
+            }
+            
             // update the cost of the tour. 
             Program.MainForm.tbCostOfTour.Text = " " + bssf.costOfRoute();
             // do a refresh. 
@@ -342,9 +352,9 @@ namespace TSP
         //--------------------------------------
         //method to generate the 2d array ('matrix') that represents a state
         //--------------------------------------
-        public double[,] generateMatrix()
+        public double[][] generateInitMatrix()
         {
-            double[,] matrix = new double[Cities.Length, Cities.Length];
+            double[][] matrix = new double[Cities.Length][];
             for (int i = 0; i < Cities.Length; i++ )
             {
                 for(int j = 0; j < Cities.Length j++) 
@@ -352,58 +362,107 @@ namespace TSP
                     if(i == j) 
                     {
                         //if a city goes to itself, assign the distance as infinite (impossible)
-                        matrix[i, j] = double.MaxValue;
+                        matrix[i][j] = double.MaxValue;
                     }
                     else
                     {
                         //else assign it the cost of getting there from i to j
-                        matrix[i, j] = Cities[i].costToGetTo(Cities[j]);
+                        matrix[i][j] = Cities[i].costToGetTo(Cities[j]);
                     }
                 }
             }
             return matrix;
         }
 
-        public double calcLowerBound()
+        //--------------------------------------
+        //method to calculate the reduced cost matrix of a state
+        //calculate lower bound then recude the cost matrix
+        //--------------------------------------
+        public void calcLowerBound(TSPState state)
         {
-            //calculate the lower bound as reduced cost matrix
+            double[][] costMatrix = state.costMatrix;
+            //create a copy of the cost matrix to modify
+            //double[][] copyCost = CopyArray(state.costMatrix);
+            
             double lb = 0;
 
             //rows
-            for (int i = 0; i < Cities.GetLength(0); i++ )
+            for (int i = 0; i < costMatrix.Length; i++ )
             {
                 double rowMin = double.MaxValue;
-                for (int j = 0; j < Cities.GetLength(1); j++ )
+                for (int j = 0; j < costMatrix[i].Length; j++ )
                 {
-                    double currCost = Cities[i].costToGetTo(Cities[j]);
+                    double currCost = costMatrix[i][j];
                     if(currCost < rowMin) {
                         rowMin = currCost;
+                    }
+                }
+                for (int j = 0; j < costMatrix[i].Length; j++ )
+                {
+                    if(costMatrix[i][j] != double.MaxValue) 
+                    {
+                        costMatrix[i][j] = costMatrix[i][j] - rowMin;
                     }
                 }
                 lb += rowMin;
             }
 
             //columns
-            for (int i = 0; i < Cities.GetLength(1); i++ )
+            for (int i = 0; i < costMatrix.Length; i++ )
             {
                 double colMin = double.MaxValue;
-                for (int j = 0; j < Cities.GetLength(0); j++ )
+                for (int j = 0; j < costMatrix[i].Length; j++ )
                 {
-                    double currCost = Cities[i].costToGetTo(Cities[j]);
+                    double currCost = costMatrix[j][i];
                     if(currCost < colMin) 
                     {
                         colMin = currCost;
                     }
                 }
+                for (int j = 0; j < costMatrix[i].Length; j++)
+                {
+                    if(costMatrix[j][i] != double.MaxValue)
+                    {
+                        costMatrix[j][i] = costMatrix[j][i] - colMin;
+                    }
+                }
                 lb += colMin;
             }
 
-            return lb;
+            state.lowerBound = lb;
+            state.costMatrix = costMatrix;
+
         }
 
+
+        //--------------------------------------
+        //method to generate a list of children states from a parent state
+        //--------------------------------------
         public List<TSPState> generateChildrenStates(TSPState parentState)
         {
+
             return null;
+        }
+
+        //--------------------------------------
+        //method to copy an array of array
+        //source: http://stackoverflow.com/questions/4670720/extremely-fast-way-to-clone-the-values-of-a-jagged-array-into-a-second-array/4671179#4671179
+        //--------------------------------------
+        public double[][] CopyArray(double[][] source)
+        {
+            var len = source.Length;
+            var dest = new double[len][];
+
+            for (var x = 0; x < len; x++)
+            {
+                var inner = source[x];
+                var ilen = inner.Length;
+                var newer = new double[ilen];
+                Array.Copy(inner, newer, ilen);
+                dest[x] = newer;
+            }
+
+            return dest;
         }
 
         #endregion
