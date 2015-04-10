@@ -14,10 +14,12 @@ namespace TSP
         //the cost of this state (the bssf at this state)?
         //public double cost { get; set; }
         //the path so far
-        public List<City> pathSoFar { get; set; }
+        //public List<City> pathSoFar { get; set; }
+        //path so far in terms of city nums for easier debugging
+        public List<int> pathSoFar { get; set; }
 
         //public TSPState(double[][] costMatrix, double lowerBound, double cost, List<City>pathSoFar)
-        public TSPState(double[][] costMatrix, double lowerBound, List<City> pathSoFar)
+        public TSPState(double[][] costMatrix, double lowerBound, List<int> pathSoFar)
         {
             this.costMatrix = costMatrix;
             this.lowerBound = lowerBound;
