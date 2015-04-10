@@ -274,7 +274,7 @@ namespace TSP
             bssfCost = bssf.costOfRoute();
 
             //run branch and bound
-            
+            branchAndBound();
         }
 
         //--------------------------------------
@@ -441,17 +441,87 @@ namespace TSP
         public List<TSPState> generateChildrenStates(TSPState parentState)
         {
             List<TSPState> children = new List<TSPState>();
+            //keep track of best child states
+            TSPState includeState = new TSPState(parentState.costMatrix, parentState.lowerBound, parentState.pathSoFar);
+            TSPState excludeState = new TSPState(parentState.costMatrix, parentState.lowerBound, parentState.pathSoFar);
+            //keep track of best include bound
+            double boundDifference = 0; // want to maximize this difference
+
+            double[][] costMatrix = parentState.costMatrix;
+
             //go through array for 0s
-                //include an edge: 
-                //if matrix[i][j] at row i contains a 0
-                    //if that 0 is the only 0 in its column
-                    //replace row i with infinities
-                //exclude an edge:
-                //at matrix[i][j], add smallelst entries in row i and column j to bound
-                //store possibility
-            //find one with greatest right bound and least left bound
-            //add those states to children
+            for (int i = 0; i < costMatrix.Length; i++ )
+            {
+                for (int j = 0; j < costMatrix[i].Length; j++ )
+                {
+                    if(costMatrix[i][j] == 0)
+                    {
+                        //include
+                        TSPState currIncludeState = calcInclude(i, j, parentState);
+                        //exclude
+                        TSPState currExcludeState = calcExclude(i, j, parentState);
+                        //calc bound difference
+                        double currDifference = excludeState.lowerBound - includeState.lowerBound;
+                        if(currDifference > boundDifference) 
+                        {
+                            //set curr best states
+                            currDifference = boundDifference;
+                            includeState = currIncludeState;
+                            excludeState = currExcludeState;
+                        }
+                    }
+                }
+                
+            }
+
+            children.Add(includeState);
+            children.Add(excludeState);
             return children;
+        }
+
+        // helper function for include
+        public TSPState calcInclude(int row, int col, TSPState parentState)
+        {
+            double[][] costMatrix = parentState.costMatrix;
+            //replace specified row with infinities
+            for (int i = 0; i < costMatrix.Length; i++ )
+            {
+                costMatrix[row][i] = double.MaxValue;
+            }
+            //replace specified col with infinities
+            for (int i = 0; i < costMatrix.Length; i++ )
+            {
+                costMatrix[i][col] = double.MaxValue;
+            }
+            //reduce
+            return null;
+        }
+
+        //helper function for exclude
+        public TSPState calcExclude(int row, int col, TSPState parentState)
+        {
+            double[][] costMatrix = parentState.costMatrix;
+            //add smallest entries in row i and col j
+            double rowMin = double.MaxValue;
+            double lowerBound = parentState.lowerBound;
+            for (int i = 0; i < costMatrix.Length; i++ )
+            {
+                if(costMatrix[row][i] < rowMin) {
+                    rowMin = costMatrix[row][i];
+                }
+            }
+            lowerBound += rowMin;
+            double colMin = double.MaxValue;
+            for (int i = 0; i < costMatrix.Length; i++)
+            {
+                if (costMatrix[row][i] < colMin)
+                {
+                    colMin = costMatrix[row][i];
+                }
+            }
+            lowerBound += colMin;
+           
+            return null;
         }
 
         //--------------------------------------
