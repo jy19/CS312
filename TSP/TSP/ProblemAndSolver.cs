@@ -252,7 +252,10 @@ namespace TSP
 
         public void greedySolution() {
             //greedy solution: sort cities by x value and go in that order
-            Array.Sort(Cities, delegate(City x, City y) { return x.X.CompareTo(y.X); });
+            //Array.Sort(Cities, delegate(City x, City y) { return x.X.CompareTo(y.X); });
+            //try sort by y?
+            Array.Sort(Cities, delegate(City x, City y) { return x.Y.CompareTo(y.Y); });
+
             for(int i = 0; i < Cities.Length; i++) {
                 Route.Add(Cities[i]);
             }
@@ -273,6 +276,11 @@ namespace TSP
             bssf = new TSPSolution(Route);
             bssfCost = bssf.costOfRoute();
 
+            //initialize stuff
+            agenda = new PriorityQueue<double,TSPState>();
+            bssfCost = double.MaxValue;
+            lowerBound = 0;
+
             //run branch and bound
             branchAndBound();
         }
@@ -291,15 +299,17 @@ namespace TSP
             double[][] initCostMatrix = generateInitMatrix();
             TSPState initialState = new TSPState(initCostMatrix, 0, new List<City>());
             //reduce the cost matrix/initialize lower bound
-            calcLowerBound(initialState);
+            //calcLowerBound(initialState);
+            Tuple<double[][], double> matrixInfo = calcReducedCostMatix(initialState);
+            initialState.costMatrix = matrixInfo.Item1;
+            initialState.lowerBound = matrixInfo.Item2;
 
             //add the initial state to agenda with its bound
             agenda.Enqueue(initialState.lowerBound, initialState);
 
             //use stopwatch for time
-            Stopwatch stopWatch = new Stopwatch();
-            stopWatch.Start();
-            int maxTime = 60000;
+            var stopWatch = Stopwatch.StartNew();
+            var maxTime = 60000;
             //while pq is not empty, bssf>lb, time is less than 60s, keep running
             while(!agenda.IsEmpty && bssfCost > lowerBound && stopWatch.ElapsedMilliseconds < maxTime) 
             {
@@ -344,6 +354,8 @@ namespace TSP
             
             // update the cost of the tour. 
             Program.MainForm.tbCostOfTour.Text = " " + bssf.costOfRoute();
+            //update the time
+            Program.MainForm.tbElapsedTime.Text = " " + (stopWatch.ElapsedMilliseconds)/1000.0 + "s";
             // do a refresh. 
             Program.MainForm.Invalidate();
         }
@@ -355,11 +367,16 @@ namespace TSP
         public double[][] generateInitMatrix()
         {
             double[][] matrix = new double[Cities.Length][];
+            //initialize the array
+            for (int k = 0; k < Cities.Length; k++ )
+            {
+                matrix[k] = new double[Cities.Length];
+            }
             for (int i = 0; i < Cities.Length; i++ )
             {
-                for(int j = 0; j < Cities.Length j++) 
+                for (int j = 0; j < Cities.Length; j++)
                 {
-                    if(i == j) 
+                    if (i == j)
                     {
                         //if a city goes to itself, assign the distance as infinite (impossible)
                         matrix[i][j] = double.MaxValue;
@@ -378,13 +395,14 @@ namespace TSP
         //method to calculate the reduced cost matrix of a state
         //calculate lower bound then recude the cost matrix
         //--------------------------------------
-        public void calcLowerBound(TSPState state)
+        //public void calcLowerBound(TSPState state)
+        public Tuple<double[][], double> calcReducedCostMatix(TSPState state)
         {
             double[][] costMatrix = state.costMatrix;
             //create a copy of the cost matrix to modify
             //double[][] copyCost = CopyArray(state.costMatrix);
             
-            double lb = 0;
+            double lb = state.lowerBound;
 
             //rows
             for (int i = 0; i < costMatrix.Length; i++ )
@@ -429,11 +447,14 @@ namespace TSP
                 lb += colMin;
             }
 
-            state.lowerBound = lb;
-            state.costMatrix = costMatrix;
+            return Tuple.Create(costMatrix, lb);
+
+            //state.lowerBound = lb;
+            //state.costMatrix = costMatrix;
 
         }
 
+        
 
         //--------------------------------------
         //method to generate a list of children states from a parent state
@@ -493,35 +514,58 @@ namespace TSP
             {
                 costMatrix[i][col] = double.MaxValue;
             }
+
+            List<City> newPath = parentState.pathSoFar;
+            //add currently on city to path
+            newPath.Add(Cities[row]);
+
+            TSPState childState = new TSPState(costMatrix, parentState.lowerBound, newPath);
+
             //reduce
-            return null;
+            Tuple<double[][], double> newMatrixInfo = calcReducedCostMatix(childState);
+            childState.costMatrix = newMatrixInfo.Item1;
+            childState.lowerBound = newMatrixInfo.Item2;
+
+            return childState;
         }
 
         //helper function for exclude
         public TSPState calcExclude(int row, int col, TSPState parentState)
         {
             double[][] costMatrix = parentState.costMatrix;
-            //add smallest entries in row i and col j
-            double rowMin = double.MaxValue;
-            double lowerBound = parentState.lowerBound;
-            for (int i = 0; i < costMatrix.Length; i++ )
-            {
-                if(costMatrix[row][i] < rowMin) {
-                    rowMin = costMatrix[row][i];
-                }
-            }
-            lowerBound += rowMin;
-            double colMin = double.MaxValue;
-            for (int i = 0; i < costMatrix.Length; i++)
-            {
-                if (costMatrix[row][i] < colMin)
-                {
-                    colMin = costMatrix[row][i];
-                }
-            }
-            lowerBound += colMin;
-           
-            return null;
+            List<City> pathSoFar = parentState.pathSoFar;
+            //add new city to path
+            pathSoFar.Add(Cities[row]);
+            ////add smallest entries in row i and col j
+            //double rowMin = double.MaxValue;
+            //double lowerBound = parentState.lowerBound;
+            //for (int i = 0; i < costMatrix.Length; i++ )
+            //{
+            //    if(costMatrix[row][i] < rowMin) {
+            //        rowMin = costMatrix[row][i];
+            //    }
+            //}
+            //lowerBound += rowMin;
+            //double colMin = double.MaxValue;
+            //for (int i = 0; i < costMatrix.Length; i++)
+            //{
+            //    if (costMatrix[row][i] < colMin)
+            //    {
+            //        colMin = costMatrix[row][i];
+            //    }
+            //}
+            //lowerBound += colMin;
+
+            //replace the excluded edge with infinite
+            costMatrix[row][col] = double.MaxValue;
+
+            TSPState childState = new TSPState(costMatrix, parentState.lowerBound, pathSoFar);
+            //reduce new matrix
+            Tuple<double[][], double> newMatrixInfo = calcReducedCostMatix(childState);
+            childState.costMatrix = newMatrixInfo.Item1;
+            childState.lowerBound = newMatrixInfo.Item2;
+
+            return childState;
         }
 
         //--------------------------------------
