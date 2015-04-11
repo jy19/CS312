@@ -27,5 +27,12 @@ namespace TSP
             //this.cost = cost;
             this.pathSoFar = pathSoFar;
         }
+
+        //some constant value to 'reward' states with for having more depth/more explored cities
+        private const int SOME_CONST = 50;
+
+        public double getBound() {
+            return this.lowerBound - this.pathSoFar.Count*SOME_CONST;
+        }
     }
 }

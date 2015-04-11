@@ -394,24 +394,19 @@ namespace TSP
 
             //add the initial state to agenda with its bound
             //agenda.Enqueue(initialState.lowerBound, initialState);
-            agenda.Enqueue(initialState, initialState.lowerBound);
+            agenda.Enqueue(initialState, initialState.getBound());
 
             //use stopwatch for time
             var stopWatch = Stopwatch.StartNew();
             var maxTime = 60000;
             //while pq is not empty, bssf>lb, time is less than 60s, keep running
-            //while(agenda.Count != 0 && bssfCost != agenda.First().lowerBound && stopWatch.ElapsedMilliseconds < maxTime) 
-            while (agenda.Count != 0 && bssfCost != agenda.First().lowerBound) 
+            while(agenda.Count != 0 && bssfCost != agenda.First().lowerBound && stopWatch.ElapsedMilliseconds < maxTime) 
+            //while (agenda.Count != 0 && bssfCost > agenda.First().lowerBound) 
             {
                 if(statesCount < agenda.Count()) {
                     statesCount = agenda.Count();
                 }
 
-                if(agenda.Count() > 100000)
-                {
-                    Console.WriteLine("-----------so many states: " + agenda.Count() + "-------------");
-                    break;
-                }
                 //curr state is first on agenda, also remove first on agenda
                 TSPState currState = agenda.Dequeue();
                 //lowerBound = currState.lowerBound;
@@ -422,7 +417,7 @@ namespace TSP
                     foreach (TSPState child in children)
                     {
                         //if no time left, break
-                        //if (stopWatch.ElapsedMilliseconds > maxTime) { break; }
+                        if (stopWatch.ElapsedMilliseconds > maxTime) { break; }
                         
                         //if child.bound is better than bssf
                         if (child.lowerBound < bssfCost)
@@ -447,7 +442,7 @@ namespace TSP
                             else
                             {
                                 //add child to agenda
-                                agenda.Enqueue(child, child.lowerBound);
+                                agenda.Enqueue(child, child.getBound());
                             }
 
                         }
@@ -456,14 +451,15 @@ namespace TSP
                 }
                 
             }
-            
+
+            Console.WriteLine("---------------most states at once? " + statesCount);
             // update the cost of the tour. 
             Program.MainForm.tbCostOfTour.Text = " " + bssf.costOfRoute();
             //update the time
             Program.MainForm.tbElapsedTime.Text = " " + (stopWatch.ElapsedMilliseconds)/1000.0 + "s";
             // do a refresh. 
             Program.MainForm.Invalidate();
-            Console.WriteLine("---------------most states at once? " + statesCount);
+            
         }
 
 
@@ -485,7 +481,7 @@ namespace TSP
                     if (i == j)
                     {
                         //if a city goes to itself, assign the distance as infinite (impossible)
-                        matrix[i][j] = double.MaxValue;
+                        matrix[i][j] = double.PositiveInfinity;
                     }
                     else
                     {
@@ -513,7 +509,7 @@ namespace TSP
             //rows
             for (int i = 0; i < costMatrix.Length; i++ )
             {
-                double rowMin = double.MaxValue;
+                double rowMin = double.PositiveInfinity;
                 for (int j = 0; j < costMatrix[i].Length; j++ )
                 {
                     double currCost = costMatrix[i][j];
@@ -522,12 +518,12 @@ namespace TSP
                     }
                 }
                 //if the whole row is infinite, can't reduce this row
-                if(rowMin == double.MaxValue) {
+                if(rowMin == double.PositiveInfinity) {
                     continue;
                 }
                 for (int j = 0; j < costMatrix[i].Length; j++ )
                 {
-                    if(costMatrix[i][j] != double.MaxValue) 
+                    if(costMatrix[i][j] != double.PositiveInfinity) 
                     {
                         costMatrix[i][j] = costMatrix[i][j] - rowMin;
                     }
@@ -538,7 +534,7 @@ namespace TSP
             //columns
             for (int i = 0; i < costMatrix.Length; i++ )
             {
-                double colMin = double.MaxValue;
+                double colMin = double.PositiveInfinity;
                 for (int j = 0; j < costMatrix[i].Length; j++ )
                 {
                     double currCost = costMatrix[j][i];
@@ -548,13 +544,13 @@ namespace TSP
                     }
                 }
                 //if the whole col is infinite, can't reduce this col
-                if (colMin == double.MaxValue)
+                if (colMin == double.PositiveInfinity)
                 {
                     continue;
                 }
                 for (int j = 0; j < costMatrix[i].Length; j++)
                 {
-                    if(costMatrix[j][i] != double.MaxValue)
+                    if(costMatrix[j][i] != double.PositiveInfinity)
                     {
                         costMatrix[j][i] = costMatrix[j][i] - colMin;
                     }
@@ -590,6 +586,7 @@ namespace TSP
             {
                 for (int j = 0; j < costMatrix[i].Length; j++ )
                 {
+                    //instead of saying only 0, explore other non-infinity fields
                     if(costMatrix[i][j] == 0)
                     {
                         //if this city is already in the path, skip it
@@ -628,12 +625,12 @@ namespace TSP
             //replace specified row with infinities
             for (int i = 0; i < costMatrix.Length; i++ )
             {
-                costMatrix[row][i] = double.MaxValue;
+                costMatrix[row][i] = double.PositiveInfinity;
             }
             //replace specified col with infinities
             for (int i = 0; i < costMatrix.Length; i++ )
             {
-                costMatrix[i][col] = double.MaxValue;
+                costMatrix[i][col] = double.PositiveInfinity;
             }
 
             //List<City> pathSoFar = parentState.pathSoFar;
@@ -646,9 +643,9 @@ namespace TSP
             //change those values all to infinites
             for (int i = 0; i < pathSoFar.Count; i++ )
             {
-                costMatrix[row][pathSoFar[i]] = double.MaxValue;
+                costMatrix[col][pathSoFar[i]] = double.PositiveInfinity;
             }
-            pathSoFar.Add(row);
+            pathSoFar.Add(col);
 
             double parentLowerBound = parentState.lowerBound;
 
@@ -671,7 +668,7 @@ namespace TSP
             List<int> pathSoFar = new List<int>(parentState.pathSoFar);
 
             //replace the excluded edge with infinite
-            costMatrix[row][col] = double.MaxValue;
+            costMatrix[row][col] = double.PositiveInfinity;
 
             double parentLowerBound = parentState.lowerBound;
 
