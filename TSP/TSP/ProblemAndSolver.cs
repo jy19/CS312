@@ -429,6 +429,7 @@ namespace TSP
                                 List<City> citiesList = new List<City>();
                                 for (int i = 0; i < child.pathSoFar.Count; i++ )
                                 {
+                                    //currently incorrect, include adds paths that are not necessarily connected
                                     citiesList.Add(Cities[child.pathSoFar[i]]);
                                 }
                                 TSPSolution possibleSolution = new TSPSolution(new ArrayList(citiesList));
