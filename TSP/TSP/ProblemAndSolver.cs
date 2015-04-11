@@ -248,20 +248,26 @@ namespace TSP
         //priority queue of states for the agenda, based on lower bound
         PriorityQueue<double, TSPState> agenda;
         double bssfCost; //bssf that's not an object
-        double lowerBound; //the curr lower bound
+        //double lowerBound; //the curr lower bound
 
         //some functions to help split an array
         //source: http://stackoverflow.com/questions/1841246/c-sharp-splitting-an-array/1841276#1841276
         public void Split<T>(T[] array, int index, out T[] first, out T[] second)
         {
-            first = array.Take(index).ToArray();
-            second = array.Skip(index).ToArray();
+            //first = array.Take(index).ToArray();
+            //second = array.Skip(index).ToArray();
+            int len2 = array.Length - index;
+            first = new T[index];
+            second = new T[len2];
+            Array.Copy(array, 0, first, 0, index);
+            Array.Copy(array, index, second, 0, len2);
         }
 
         public void SplitMidPoint<T>(T[] array, out T[] first, out T[] second)
         {
             Split(array, array.Length / 2, out first, out second);
         }
+
 
         //public void recSplit(City[] currCities, City[] cities1, City[] cities2)
         //{
@@ -273,25 +279,58 @@ namespace TSP
         //    Array.Reverse(cities2);
         //}
 
+        public City[] sortByX(City[] cities)
+        {
+            Array.Sort(cities, delegate(City x, City y) { return x.X.CompareTo(y.X); });
+            return cities;
+        }
+
+        public City[] sortByY(City[] cities)
+        {
+            Array.Sort(cities, delegate(City x, City y) { return x.Y.CompareTo(y.Y); });
+            return cities;
+        }
+
         public void greedySolution() {
-            //greedy solution: sort cities by x value, split twice, then sort by y
+            //greedy solution: some sorts by x and y to get path around all points
             //copy array to make changes to
             City[] copyCities = new City[Cities.Length];
             Array.Copy(Cities, copyCities, Cities.Length);
-            Array.Sort(copyCities, delegate(City x, City y) { return x.X.CompareTo(y.X); });
+            //Array.Sort(copyCities, delegate(City x, City y) { return x.X.CompareTo(y.X); });
+            copyCities = sortByX(copyCities);
             City[] cities1 = new City[Cities.Length / 2];
-            City[] cities2 = new City[Cities.Length / 2];
+            City[] cities2 = new City[Cities.Length - cities1.Length];
             SplitMidPoint(copyCities, out cities1, out cities2);
             //sort by y
-            Array.Sort(cities1, delegate(City x, City y) { return x.Y.CompareTo(y.Y); });
-            Array.Sort(cities2, delegate(City x, City y) { return x.Y.CompareTo(y.Y); });
-            Array.Reverse(cities2);
+            //Array.Sort(cities1, delegate(City x, City y) { return x.Y.CompareTo(y.Y); });
+            //Array.Sort(cities2, delegate(City x, City y) { return x.Y.CompareTo(y.Y); });
+            cities1 = sortByY(cities1);
+            cities2 = sortByY(cities2);
+            //split those again
+            City[] cities1_1 = new City[cities1.Length / 2];
+            City[] cities1_2 = new City[cities1.Length - cities1_1.Length];
+            City[] cities2_1 = new City[cities2.Length / 2];
+            City[] cities2_2 = new City[cities2.Length - cities2_1.Length];
+            
+            SplitMidPoint(cities1, out cities1_1, out cities1_2);
+            SplitMidPoint(cities2, out cities2_1, out cities2_2);
+
+            cities1_1 = sortByX(cities1_1);
+            cities1_2 = sortByX(cities1_2);
+            cities2_1 = sortByX(cities2_1);
+            cities2_2 = sortByX(cities2_2);
+            Array.Reverse(cities1_2);
+            Array.Reverse(cities2_2);
             
 
             //concat all the arrays
             var allCities = new City[Cities.Length];
-            cities1.CopyTo(allCities, 0);
-            cities2.CopyTo(allCities, cities1.Length);
+            //cities1.CopyTo(allCities, 0);
+            //cities2.CopyTo(allCities, cities1.Length);
+            cities1_1.CopyTo(allCities, 0);
+            cities2_1.CopyTo(allCities, cities1_1.Length);
+            cities2_2.CopyTo(allCities, (cities1_1.Length + cities2_1.Length));
+            cities1_2.CopyTo(allCities, (cities1_1.Length + cities2_1.Length + cities2_2.Length));
 
             //add cities to route
             for (int i = 0; i < allCities.Length; i++ )
@@ -299,9 +338,6 @@ namespace TSP
                 Route.Add(allCities[i]);
             }
 
-            //for(int i = 0; i < Cities.Length; i++) {
-            //    Route.Add(Cities[i]);
-            //}
             //set the current bssf
             bssf = new TSPSolution(Route);
             //set the current bssf cost
@@ -321,7 +357,7 @@ namespace TSP
 
             //initialize stuff
             agenda = new PriorityQueue<double,TSPState>();
-            lowerBound = 0;
+            //lowerBound = 0;
 
             //run branch and bound
             branchAndBound();
@@ -337,6 +373,8 @@ namespace TSP
                 //if agenda is not empty, clear it
                 agenda.clearPQ();
             }
+            //variable to keep track of number of states
+            double statesCount = 1;
             //build initial state
             double[][] initCostMatrix = generateInitMatrix();
             TSPState initialState = new TSPState(initCostMatrix, 0, new List<int>());
@@ -353,11 +391,14 @@ namespace TSP
             var stopWatch = Stopwatch.StartNew();
             var maxTime = 60000;
             //while pq is not empty, bssf>lb, time is less than 60s, keep running
-            while(!agenda.IsEmpty && bssfCost > lowerBound && stopWatch.ElapsedMilliseconds < maxTime) 
+            while(!agenda.IsEmpty && bssfCost != agenda.PeekValue().lowerBound && stopWatch.ElapsedMilliseconds < maxTime) 
             {
+                if(statesCount < agenda.getSize()) {
+                    statesCount = agenda.getSize();
+                }
                 //curr state is first on agenda, also remove first on agenda
                 TSPState currState = agenda.DequeueValue();
-                lowerBound = currState.lowerBound;
+                //lowerBound = currState.lowerBound;
                 if(currState.lowerBound < bssfCost)
                 {
                     //children = successors of curr state
@@ -406,6 +447,7 @@ namespace TSP
             Program.MainForm.tbElapsedTime.Text = " " + (stopWatch.ElapsedMilliseconds)/1000.0 + "s";
             // do a refresh. 
             Program.MainForm.Invalidate();
+            Console.WriteLine("---------------most states at once? " + statesCount);
         }
 
 
@@ -520,8 +562,8 @@ namespace TSP
         {
             List<TSPState> children = new List<TSPState>();
             //keep track of best child states
-            TSPState includeState = new TSPState(null, 0, null);
-            TSPState excludeState = new TSPState(null, 0, null);
+            TSPState includeState = null;
+            TSPState excludeState = null;
             //keep track of best include bound
             double boundDifference = 0; // want to maximize this difference
 
@@ -543,7 +585,7 @@ namespace TSP
                         //exclude
                         TSPState currExcludeState = calcExclude(i, j, parentState);
                         //calc bound difference
-                        double currDifference = excludeState.lowerBound - includeState.lowerBound;
+                        double currDifference = currExcludeState.lowerBound - currIncludeState.lowerBound;
                         if(currDifference >= boundDifference) 
                         {
                             //set curr best states
@@ -556,8 +598,10 @@ namespace TSP
                 
             }
 
-            children.Add(includeState);
-            children.Add(excludeState);
+            //check that the state is not null and that it passes criterion
+            if(includeState != null && includeState.lowerBound < bssfCost) { children.Add(includeState); }
+            if(excludeState != null && excludeState.lowerBound < bssfCost) { children.Add(excludeState); }
+            
             return children;
         }
 
@@ -583,7 +627,9 @@ namespace TSP
             //pathSoFar.Add(Cities[row]);
             pathSoFar.Add(row);
 
-            TSPState childState = new TSPState(costMatrix, parentState.lowerBound, pathSoFar);
+            double parentLowerBound = parentState.lowerBound;
+
+            TSPState childState = new TSPState(costMatrix, parentLowerBound, pathSoFar);
 
             //reduce
             Tuple<double[][], double> newMatrixInfo = calcReducedCostMatix(childState);
@@ -600,33 +646,13 @@ namespace TSP
             //List<City> pathSoFar = parentState.pathSoFar;
             //create new list so it's not referencing old one
             List<int> pathSoFar = new List<int>(parentState.pathSoFar);
-            //add new city to path
-            //pathSoFar.Add(Cities[row]);
-            pathSoFar.Add(row);
-            ////add smallest entries in row i and col j
-            //double rowMin = double.MaxValue;
-            //double lowerBound = parentState.lowerBound;
-            //for (int i = 0; i < costMatrix.Length; i++ )
-            //{
-            //    if(costMatrix[row][i] < rowMin) {
-            //        rowMin = costMatrix[row][i];
-            //    }
-            //}
-            //lowerBound += rowMin;
-            //double colMin = double.MaxValue;
-            //for (int i = 0; i < costMatrix.Length; i++)
-            //{
-            //    if (costMatrix[row][i] < colMin)
-            //    {
-            //        colMin = costMatrix[row][i];
-            //    }
-            //}
-            //lowerBound += colMin;
 
             //replace the excluded edge with infinite
             costMatrix[row][col] = double.MaxValue;
 
-            TSPState childState = new TSPState(costMatrix, parentState.lowerBound, pathSoFar);
+            double parentLowerBound = parentState.lowerBound;
+
+            TSPState childState = new TSPState(costMatrix, parentLowerBound, pathSoFar);
             //reduce new matrix
             Tuple<double[][], double> newMatrixInfo = calcReducedCostMatix(childState);
             childState.costMatrix = newMatrixInfo.Item1;

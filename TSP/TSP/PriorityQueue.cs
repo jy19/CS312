@@ -157,5 +157,10 @@ namespace TSP
                 this.Dequeue();
             }
         }
+
+        public int getSize()
+        {
+            return _baseHeap.Count();
+        }
     }
 }
