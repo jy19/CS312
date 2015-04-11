@@ -246,8 +246,11 @@ namespace TSP
         /// </summary>
         /// 
 
-        //priority queue of states for the agenda, based on lower bound
+        
         //PriorityQueue<double, TSPState> agenda;
+
+        //priority queue of states for the agenda, based on lower bound
+        //source: https://bitbucket.org/BlueRaja/high-speed-priority-queue-for-c/wiki/Home
         HeapPriorityQueue<TSPState> agenda;
         const int MAX_STATES = 200000;
         double bssfCost; //bssf that's not an object
@@ -397,7 +400,8 @@ namespace TSP
             var stopWatch = Stopwatch.StartNew();
             var maxTime = 60000;
             //while pq is not empty, bssf>lb, time is less than 60s, keep running
-            while(agenda.Count != 0 && bssfCost != agenda.First().lowerBound && stopWatch.ElapsedMilliseconds < maxTime) 
+            //while(agenda.Count != 0 && bssfCost != agenda.First().lowerBound && stopWatch.ElapsedMilliseconds < maxTime) 
+            while (agenda.Count != 0 && bssfCost != agenda.First().lowerBound) 
             {
                 if(statesCount < agenda.Count()) {
                     statesCount = agenda.Count();
@@ -412,7 +416,7 @@ namespace TSP
                     foreach (TSPState child in children)
                     {
                         //if no time left, break
-                        if (stopWatch.ElapsedMilliseconds > maxTime) { break; }
+                        //if (stopWatch.ElapsedMilliseconds > maxTime) { break; }
                         
                         //if child.bound is better than bssf
                         if (child.lowerBound < bssfCost)
