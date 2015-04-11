@@ -565,56 +565,6 @@ namespace TSP
         //--------------------------------------
         //method to generate a list of children states from a parent state
         //--------------------------------------
-        //public List<TSPState> generateChildrenStates(TSPState parentState)
-        //{
-        //    List<TSPState> children = new List<TSPState>();
-        //    //keep track of best child states
-        //    TSPState includeState = null;
-        //    TSPState excludeState = null;
-        //    //keep track of best include bound
-        //    double boundDifference = 0; // want to maximize this difference
-
-        //    double[][] costMatrix = parentState.costMatrix;
-
-        //    //go through array for 0s
-        //    for (int i = 0; i < costMatrix.Length; i++ )
-        //    {
-        //        for (int j = 0; j < costMatrix[i].Length; j++ )
-        //        {
-        //            //instead of saying only 0, explore other non-infinity fields
-        //            if(costMatrix[i][j] == 0)
-        //            //if(costMatrix[i][j] != double.PositiveInfinity)
-        //            {
-        //                //if this city is already in the path, skip it
-        //                if(parentState.pathSoFar.Contains(i)) {
-        //                    continue;
-        //                }
-        //                //include
-        //                TSPState currIncludeState = calcInclude(i, j, parentState);
-        //                //exclude
-        //                TSPState currExcludeState = calcExclude(i, j, parentState);
-        //                //calc bound difference
-        //                double currDifference = currExcludeState.lowerBound - currIncludeState.lowerBound;
-        //                if(currDifference >= boundDifference) 
-        //                {
-        //                    //set curr best states
-        //                    boundDifference = currDifference;
-        //                    includeState = currIncludeState;
-        //                    excludeState = currExcludeState;
-        //                }
-        //            }
-        //        }
-                
-        //    }
-
-        //    //check that the state is not null and that it passes criterion
-        //    if(includeState != null && includeState.lowerBound < bssfCost) { children.Add(includeState); }
-        //    if(excludeState != null && excludeState.lowerBound < bssfCost) { children.Add(excludeState); }
-            
-        //    return children;
-        //}
-
-        //state expansion by generating all next children
         public List<TSPState> generateChildrenStates(TSPState parentState)
         {
             List<TSPState> children = new List<TSPState>();
@@ -675,69 +625,6 @@ namespace TSP
             Tuple<double[][], double> newInfo = calcReducedCostMatix(childState);
             childState.costMatrix = newInfo.Item1;
             childState.lowerBound = newInfo.Item2;
-
-            return childState;
-        }
-
-        // helper function for include
-        public TSPState calcInclude(int row, int col, TSPState parentState)
-        {
-            double[][] costMatrix = CopyArray(parentState.costMatrix);
-            //replace specified row with infinities
-            for (int i = 0; i < costMatrix.Length; i++ )
-            {
-                costMatrix[row][i] = double.PositiveInfinity;
-            }
-            //replace specified col with infinities
-            for (int i = 0; i < costMatrix.Length; i++ )
-            {
-                costMatrix[i][col] = double.PositiveInfinity;
-            }
-
-            //List<City> pathSoFar = parentState.pathSoFar;
-            //create new list so it's not referencing old one
-            List<int> pathSoFar = new List<int>(parentState.pathSoFar);
-            //add currently on city to path
-            //pathSoFar.Add(Cities[row]);
-
-            //newest city cannot go to any that is already in path so far
-            //change those values all to infinites
-            for (int i = 0; i < pathSoFar.Count; i++ )
-            {
-                costMatrix[col][pathSoFar[i]] = double.PositiveInfinity;
-            }
-            pathSoFar.Add(col);
-
-            double parentLowerBound = parentState.lowerBound;
-
-            TSPState childState = new TSPState(costMatrix, parentLowerBound, pathSoFar);
-
-            //reduce
-            Tuple<double[][], double> newMatrixInfo = calcReducedCostMatix(childState);
-            childState.costMatrix = newMatrixInfo.Item1;
-            childState.lowerBound = newMatrixInfo.Item2;
-
-            return childState;
-        }
-
-        //helper function for exclude
-        public TSPState calcExclude(int row, int col, TSPState parentState)
-        {
-            double[][] costMatrix = CopyArray(parentState.costMatrix);
-            //List<City> pathSoFar = parentState.pathSoFar;
-            //create new list so it's not referencing old one
-            List<int> pathSoFar = new List<int>(parentState.pathSoFar);
-
-            //replace the excluded edge with infinite
-            costMatrix[row][col] = double.PositiveInfinity;
-
-            double parentLowerBound = parentState.lowerBound;
-
-            TSPState childState = new TSPState(costMatrix, parentLowerBound, pathSoFar);
-            //reduce new matrix
-            Tuple<double[][], double> newMatrixInfo = calcReducedCostMatix(childState);
-            childState.costMatrix = newMatrixInfo.Item1;
-            childState.lowerBound = newMatrixInfo.Item2;
 
             return childState;
         }
