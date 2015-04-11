@@ -394,7 +394,7 @@ namespace TSP
 
             //add the initial state to agenda with its bound
             //agenda.Enqueue(initialState.lowerBound, initialState);
-            agenda.Enqueue(initialState, initialState.getBound());
+            agenda.Enqueue(initialState, initialState.getPriority());
 
             //use stopwatch for time
             var stopWatch = Stopwatch.StartNew();
@@ -442,7 +442,7 @@ namespace TSP
                             else
                             {
                                 //add child to agenda
-                                agenda.Enqueue(child, child.getBound());
+                                agenda.Enqueue(child, child.getPriority());
                             }
 
                         }
@@ -523,10 +523,7 @@ namespace TSP
                 }
                 for (int j = 0; j < costMatrix[i].Length; j++ )
                 {
-                    if(costMatrix[i][j] != double.PositiveInfinity) 
-                    {
-                        costMatrix[i][j] = costMatrix[i][j] - rowMin;
-                    }
+                    costMatrix[i][j] = costMatrix[i][j] - rowMin;
                 }
                 lb += rowMin;
             }
@@ -550,10 +547,7 @@ namespace TSP
                 }
                 for (int j = 0; j < costMatrix[i].Length; j++)
                 {
-                    if(costMatrix[j][i] != double.PositiveInfinity)
-                    {
-                        costMatrix[j][i] = costMatrix[j][i] - colMin;
-                    }
+                    costMatrix[j][i] = costMatrix[j][i] - colMin;
                 }
                 lb += colMin;
             }
@@ -588,6 +582,7 @@ namespace TSP
                 {
                     //instead of saying only 0, explore other non-infinity fields
                     if(costMatrix[i][j] == 0)
+                    //if(costMatrix[i][j] != double.PositiveInfinity)
                     {
                         //if this city is already in the path, skip it
                         if(parentState.pathSoFar.Contains(i)) {
