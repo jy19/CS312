@@ -2,10 +2,11 @@
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
+using Priority_Queue;
 
 namespace TSP
 {
-    class TSPState
+    class TSPState : PriorityQueueNode
     {
         //the cost matrix of the state
         public double[][] costMatrix {get; set;} 

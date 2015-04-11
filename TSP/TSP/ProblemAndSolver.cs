@@ -5,6 +5,7 @@ using System.Text;
 using System.Drawing;
 using System.Diagnostics;
 using System.Linq;
+using Priority_Queue;
 
 namespace TSP
 {
@@ -246,7 +247,9 @@ namespace TSP
         /// 
 
         //priority queue of states for the agenda, based on lower bound
-        PriorityQueue<double, TSPState> agenda;
+        //PriorityQueue<double, TSPState> agenda;
+        HeapPriorityQueue<TSPState> agenda;
+        const int MAX_STATES = 200000;
         double bssfCost; //bssf that's not an object
         //double lowerBound; //the curr lower bound
 
@@ -356,7 +359,8 @@ namespace TSP
             bssfCost = bssf.costOfRoute();
 
             //initialize stuff
-            agenda = new PriorityQueue<double,TSPState>();
+            //agenda = new PriorityQueue<double,TSPState>();
+            agenda = new HeapPriorityQueue<TSPState>(MAX_STATES);
             //lowerBound = 0;
 
             //run branch and bound
@@ -368,10 +372,11 @@ namespace TSP
         //--------------------------------------
         public void branchAndBound()
         {
-            if(!agenda.IsEmpty)
+            //if(!agenda.IsEmpty)
+            if(agenda.Count != 0)
             {
                 //if agenda is not empty, clear it
-                agenda.clearPQ();
+                agenda.Clear();
             }
             //variable to keep track of number of states
             double statesCount = 1;
@@ -385,19 +390,20 @@ namespace TSP
             initialState.lowerBound = matrixInfo.Item2;
 
             //add the initial state to agenda with its bound
-            agenda.Enqueue(initialState.lowerBound, initialState);
+            //agenda.Enqueue(initialState.lowerBound, initialState);
+            agenda.Enqueue(initialState, initialState.lowerBound);
 
             //use stopwatch for time
             var stopWatch = Stopwatch.StartNew();
             var maxTime = 60000;
             //while pq is not empty, bssf>lb, time is less than 60s, keep running
-            while(!agenda.IsEmpty && bssfCost != agenda.PeekValue().lowerBound && stopWatch.ElapsedMilliseconds < maxTime) 
+            while(agenda.Count != 0 && bssfCost != agenda.First().lowerBound && stopWatch.ElapsedMilliseconds < maxTime) 
             {
-                if(statesCount < agenda.getSize()) {
-                    statesCount = agenda.getSize();
+                if(statesCount < agenda.Count()) {
+                    statesCount = agenda.Count();
                 }
                 //curr state is first on agenda, also remove first on agenda
-                TSPState currState = agenda.DequeueValue();
+                TSPState currState = agenda.Dequeue();
                 //lowerBound = currState.lowerBound;
                 if(currState.lowerBound < bssfCost)
                 {
@@ -431,7 +437,7 @@ namespace TSP
                             else
                             {
                                 //add child to agenda
-                                agenda.Enqueue(child.lowerBound, child);
+                                agenda.Enqueue(child, child.lowerBound);
                             }
 
                         }
