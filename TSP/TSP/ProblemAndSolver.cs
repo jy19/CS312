@@ -406,6 +406,12 @@ namespace TSP
                 if(statesCount < agenda.Count()) {
                     statesCount = agenda.Count();
                 }
+
+                if(agenda.Count() > 100000)
+                {
+                    Console.WriteLine("-----------so many states: " + agenda.Count() + "-------------");
+                    break;
+                }
                 //curr state is first on agenda, also remove first on agenda
                 TSPState currState = agenda.Dequeue();
                 //lowerBound = currState.lowerBound;
@@ -635,6 +641,13 @@ namespace TSP
             List<int> pathSoFar = new List<int>(parentState.pathSoFar);
             //add currently on city to path
             //pathSoFar.Add(Cities[row]);
+
+            //newest city cannot go to any that is already in path so far
+            //change those values all to infinites
+            for (int i = 0; i < pathSoFar.Count; i++ )
+            {
+                costMatrix[row][pathSoFar[i]] = double.MaxValue;
+            }
             pathSoFar.Add(row);
 
             double parentLowerBound = parentState.lowerBound;
