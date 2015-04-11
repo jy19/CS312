@@ -29,7 +29,7 @@ namespace TSP
         }
 
         //some constant value to 'reward' states with for having more depth/more explored cities
-        private const int SOME_CONST = 100;
+        private const int SOME_CONST = 50;
 
         public double getPriority() {
             return this.lowerBound - this.pathSoFar.Count*SOME_CONST;
