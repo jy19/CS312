@@ -417,7 +417,7 @@ namespace TSP
             agenda = new HeapPriorityQueue<TSPState>(MAX_STATES);
             //lowerBound = 0;
 
-            Console.WriteLine("-----------bssf cost: " + bssfCost + "-------------");
+            //Console.WriteLine("-----------bssf cost: " + bssfCost + "-------------");
 
             //run branch and bound
             branchAndBound();
@@ -494,7 +494,8 @@ namespace TSP
             var stopWatch = Stopwatch.StartNew();
             var maxTime = 60000;
             //while pq is not empty, bssf>lb, time is less than 60s, keep running
-            //while(agenda.Count != 0 && bssfCost != agenda.First().lowerBound && stopWatch.ElapsedMilliseconds < maxTime) 
+
+            //while (agenda.Count != 0 && bssfCost != agenda.First().lowerBound && stopWatch.ElapsedMilliseconds < maxTime)
             while (agenda.Count != 0 && bssfCost > agenda.First().lowerBound) 
             {
                 if(statesCount < agenda.Count()) {
@@ -541,11 +542,11 @@ namespace TSP
 
                     }
                 }
-                
+               
             }
 
-            Console.WriteLine("---------------most states at once? " + statesCount);
-            Console.WriteLine("agenda count? " + agenda.Count);
+            //Console.WriteLine("---------------most states at once? " + statesCount);
+            //Console.WriteLine("agenda count? " + agenda.Count);
             // update the cost of the tour. 
             Program.MainForm.tbCostOfTour.Text = " " + bssf.costOfRoute();
             //update the time
