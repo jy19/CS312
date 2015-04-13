@@ -463,8 +463,8 @@ namespace TSP
             var stopWatch = Stopwatch.StartNew();
             var maxTime = 60000;
             //while pq is not empty, bssf>lb, time is less than 60s, keep running
-            //while(agenda.Count != 0 && bssfCost != agenda.First().lowerBound && stopWatch.ElapsedMilliseconds < maxTime) 
-            while (agenda.Count != 0 && bssfCost > agenda.First().lowerBound) 
+            while(agenda.Count != 0 && bssfCost != agenda.First().lowerBound && stopWatch.ElapsedMilliseconds < maxTime) 
+            //while (agenda.Count != 0 && bssfCost > agenda.First().lowerBound) 
             {
                 if(statesCount < agenda.Count()) {
                     statesCount = agenda.Count();
@@ -480,7 +480,7 @@ namespace TSP
                     foreach (TSPState child in children)
                     {
                         //if no time left, break
-                        //if (stopWatch.ElapsedMilliseconds > maxTime) { break; }
+                        if (stopWatch.ElapsedMilliseconds > maxTime) { break; }
 
                         //Console.WriteLine("+++++++++++++child cities: " + child.pathSoFar.Count + "++++++++++++++++++");
                         //Console.WriteLine("++++++++++++++++curr child lower bound: " + child.lowerBound + "+++++++++++++++++");
@@ -649,8 +649,9 @@ namespace TSP
         }
 
         //method to see if city being visited will create a cycle or not
-        public bool isValidCity(int cityFrom, int cityTo, Dictionary<int, int> paths)
+        public bool isValidCity(int cityFrom, int cityTo, TSPState state)
         {
+            Dictionary<int, int> paths = state.paths;
             if (paths.Count == 0)
             {
                 return true;
@@ -709,7 +710,7 @@ namespace TSP
                 {
                     //instead of saying only 0, explore other non-infinity fields?
                     //if the value is 0, and that coming from city hasn't already been used nor has going to city
-                    if(costMatrix[i][j] == 0 && isValidCity(i, j, parentState.paths))
+                    if(costMatrix[i][j] == 0 && isValidCity(i, j, parentState))
                     //if(costMatrix[i][j] != double.PositiveInfinity)
                     {
                         //include
@@ -746,21 +747,12 @@ namespace TSP
             //it can't go into any other cities
             for (int i = 0; i < costMatrix.Length; i++ )
             {
-                if(double.IsNaN(costMatrix[row][i])) {
-                    Console.WriteLine("should it reach here? 1");
-                    continue;
-                }
                 costMatrix[row][i] = double.PositiveInfinity;
             }
             //replace specified col with infinities
             //no other cities can enter here
             for (int i = 0; i < costMatrix.Length; i++ )
             {
-                if (double.IsNaN(costMatrix[i][col]))
-                {
-                    Console.WriteLine("should it reach here? 2");
-                    continue;
-                }
                 costMatrix[i][col] = double.PositiveInfinity;
             }
 
@@ -780,7 +772,7 @@ namespace TSP
             {
                 if (double.IsNaN(costMatrix[col][pathSoFar[i]]))
                 {
-                    Console.WriteLine("should it reach here? 3 (pretty sure shouldn't be here");
+                    //Console.WriteLine("should it reach here? 3 (pretty sure shouldn't be here");
                     continue;
                 }
                 costMatrix[col][pathSoFar[i]] = double.PositiveInfinity;
@@ -817,6 +809,7 @@ namespace TSP
             double parentLowerBound = parentState.lowerBound;
 
             TSPState childState = new TSPState(costMatrix, parentLowerBound, pathSoFar);
+            childState.paths = new Dictionary<int, int>(parentState.paths);
             //reduce new matrix
             Tuple<double[][], double> newMatrixInfo = calcReducedCostMatix(childState);
             childState.costMatrix = newMatrixInfo.Item1;
