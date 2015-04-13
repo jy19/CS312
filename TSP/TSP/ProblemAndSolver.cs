@@ -51,6 +51,22 @@ namespace TSP
                 cost += here.costToGetTo(Route[0] as City);
                 return cost; 
             }
+
+
+            public override String ToString()
+            {
+                StringBuilder builder = new StringBuilder();
+
+                builder.Append('[');
+                foreach (City c in Route)
+                {
+                    builder.Append("[" + c.X + "," + c.Y + "],");
+                }
+                builder.Remove(builder.Length - 1, 1); //Remove extra comma at end
+                builder.Append(']');
+
+                return builder.ToString();
+            }
         }
 
         #region private members
@@ -467,8 +483,8 @@ namespace TSP
             var maxTime = 60000;
             //while pq is not empty, bssf>lb, time is less than 60s, keep running
 
-            //while (agenda.Count != 0 && bssfCost != agenda.First().lowerBound && stopWatch.ElapsedMilliseconds < maxTime)
-            while (agenda.Count != 0 && bssfCost > agenda.First().lowerBound) 
+            while (agenda.Count != 0 && bssfCost != agenda.First().lowerBound && stopWatch.ElapsedMilliseconds < maxTime)
+            //while (agenda.Count != 0 && bssfCost > agenda.First().lowerBound) 
             {
                 if(statesCount < agenda.Count()) {
                     statesCount = agenda.Count();
@@ -484,7 +500,7 @@ namespace TSP
                     foreach (TSPState child in children)
                     {
                         //if no time left, break
-                        //if (stopWatch.ElapsedMilliseconds > maxTime) { break; }
+                        if (stopWatch.ElapsedMilliseconds > maxTime) { break; }
                         
                         //if child.bound is better than bssf
                         if (child.lowerBound < bssfCost)
@@ -517,7 +533,9 @@ namespace TSP
                
             }
 
-            //Console.WriteLine("---------------most states at once? " + statesCount);
+            Console.WriteLine("---------------most states at once? " + statesCount);
+            Console.WriteLine("---------------json string of bssf ----------------------");
+            Console.WriteLine(bssf.ToString());
             //Console.WriteLine("agenda count? " + agenda.Count);
             // update the cost of the tour. 
             Program.MainForm.tbCostOfTour.Text = " " + bssf.costOfRoute();

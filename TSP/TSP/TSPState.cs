@@ -34,10 +34,12 @@ namespace TSP
 
         //some constant value to 'reward' states with for having more depth/more explored cities
         private const int SOME_CONST = 10;
+        private const double SOME_CONST2 = 5;
 
         public double getPriority() {
-            //return (this.lowerBound / this.pathSoFar.Count);
-            return this.lowerBound - this.pathSoFar.Count*SOME_CONST;
+            //return (this.lowerBound / (this.pathSoFar.Count + 1));
+            //return this.lowerBound - this.pathSoFar.Count*SOME_CONST;
+            return this.lowerBound - SOME_CONST2 * this.lowerBound - SOME_CONST2 * this.pathSoFar.Count;
         }
     }
 }
