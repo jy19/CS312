@@ -433,34 +433,6 @@ namespace TSP
             return citiesList;
         }
 
-        public TSPState testingState()
-        {
-            double[][] costMatrix = new double[Cities.Length][];
-
-            costMatrix[0] = new double[] { double.PositiveInfinity, double.PositiveInfinity, double.PositiveInfinity, double.NaN, double.PositiveInfinity };
-            costMatrix[1] = new double[] { double.PositiveInfinity, double.PositiveInfinity, double.NaN, double.PositiveInfinity, double.PositiveInfinity };
-            costMatrix[2] = new double[] { 0, double.PositiveInfinity, double.PositiveInfinity, double.PositiveInfinity, 0 };
-            costMatrix[3] = new double[] { 0, double.PositiveInfinity, double.PositiveInfinity, double.PositiveInfinity, 157 };
-            costMatrix[4] = new double[] { double.PositiveInfinity, double.NaN, double.PositiveInfinity, double.PositiveInfinity, double.PositiveInfinity };
-
-            Dictionary<int, int> paths = new Dictionary<int, int>();
-            paths.Add(0, 3);
-            paths.Add(1, 2);
-            paths.Add(4, 1);
-
-            List<int> pathSoFar = new List<int>();
-            pathSoFar.Add(3);
-            pathSoFar.Add(2);
-            pathSoFar.Add(1);
-
-            double lowerBound = 2166;
-
-            TSPState init = new TSPState(costMatrix, lowerBound, pathSoFar);
-            init.paths = paths;
-
-            return init;
-        }
-
         //--------------------------------------
         //branch and bound with lazy pruning
         //--------------------------------------
