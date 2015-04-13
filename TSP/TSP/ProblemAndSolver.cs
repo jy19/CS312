@@ -481,9 +481,6 @@ namespace TSP
                     {
                         //if no time left, break
                         if (stopWatch.ElapsedMilliseconds > maxTime) { break; }
-
-                        //Console.WriteLine("+++++++++++++child cities: " + child.pathSoFar.Count + "++++++++++++++++++");
-                        //Console.WriteLine("++++++++++++++++curr child lower bound: " + child.lowerBound + "+++++++++++++++++");
                         
                         //if child.bound is better than bssf
                         if (child.lowerBound < bssfCost)
@@ -680,8 +677,8 @@ namespace TSP
                 }
                 tempCityTo = paths[tempCityFrom];
 
-                //if cycle created
-                if(tempCityTo == cityFrom) {
+                //cycle is created if a city goes back to an existing one when it hasn't reached the correct length yet
+                if(tempCityTo == cityFrom && paths.Count != Cities.Length - 1) {
                     return false;
                 }
                 count++;
@@ -786,6 +783,7 @@ namespace TSP
             paths.Add(row, col);
 
             childState.paths = paths;
+
 
             //reduce
             Tuple<double[][], double> newMatrixInfo = calcReducedCostMatix(childState);
