@@ -297,7 +297,7 @@ namespace TSP
             return cities;
         }
 
-        public void greedySolution() {
+        public ArrayList greedySolution() {
             //greedy solution: some sorts by x and y to get path around all points
             //copy array to make changes to
             City[] copyCities = new City[Cities.Length];
@@ -338,36 +338,99 @@ namespace TSP
             cities2_2.CopyTo(allCities, (cities1_1.Length + cities2_1.Length));
             cities1_2.CopyTo(allCities, (cities1_1.Length + cities2_1.Length + cities2_2.Length));
 
+            ArrayList tempRoute = new ArrayList();
+
             //add cities to route
             for (int i = 0; i < allCities.Length; i++ )
             {
-                Route.Add(allCities[i]);
+                tempRoute.Add(allCities[i]);
             }
 
-            //set the current bssf
-            bssf = new TSPSolution(Route);
-            //set the current bssf cost
-            bssfCost = bssf.costOfRoute();
+
+            return tempRoute;
+            ////set the current bssf
+            //bssf = new TSPSolution(Route);
+            ////set the current bssf cost
+            //bssfCost = bssf.costOfRoute();
+        }
+
+        //greedy algorithm using nearest neighbors
+        public List<int> nearestNeighbor() {
+
+            //arbitrary index as current index (i'll start at 0)
+            int currIndex = 0;
+            //temp list to store route
+            List<int> tempRoute = new List<int>();
+            //run until all index visited, or in this case when route length == cities length
+            while(tempRoute.Count < Cities.Length) { 
+                //shortest edge connecting current index to an unvisited index v
+                double minCost = double.MaxValue;
+                int cityToAdd = 0;
+                for (int i = 0; i < Cities.Length; i++ )
+                {
+                    if(!tempRoute.Contains(i)) {
+                        //calc cost from currIndex city to this city
+                        double currCost = Cities[currIndex].costToGetTo(Cities[i]);
+                        if(currCost < minCost) {
+                            minCost = currCost;
+                            cityToAdd = i;
+                        }
+                    }
+                }
+                //mark city as visited
+                tempRoute.Add(cityToAdd);
+                //set current index to v
+                currIndex = cityToAdd;
+               
+            }
+
+            return tempRoute;
         }
 
         public void solveProblem()
         {
             Route = new ArrayList(); 
             // use the greedy algo
-            greedySolution();
+            Route = greedySolution();
+            List<int> Route2 = nearestNeighbor();
 
+            TSPSolution posbssf1 = new TSPSolution(Route);
+            TSPSolution posbssf2 = new TSPSolution(new ArrayList(generateCities(Route2)));
+
+            double route1Cost = posbssf1.costOfRoute();
+            double route2Cost = posbssf2.costOfRoute();
             // call this the best solution so far.  bssf is the route that will be drawn by the Draw method. 
             //save the solution
-            bssf = new TSPSolution(Route);
-            bssfCost = bssf.costOfRoute();
+            if (Math.Min(route1Cost, route2Cost) == route1Cost)
+            {
+                bssf = posbssf1;
+                bssfCost = route1Cost;
+            }
+            else
+            {
+                bssf = posbssf2;
+                bssfCost = route2Cost;
+            }
 
             //initialize stuff
             //agenda = new PriorityQueue<double,TSPState>();
             agenda = new HeapPriorityQueue<TSPState>(MAX_STATES);
             //lowerBound = 0;
 
+            Console.WriteLine("-----------bssf cost: " + bssfCost + "-------------");
+
             //run branch and bound
             branchAndBound();
+        }
+
+        //helper function to generate list of City from list of int city positions
+        public List<City> generateCities(List<int> intCities) {
+            List<City> citiesList = new List<City>();
+            for (int i = 0; i < intCities.Count; i++ )
+            {
+                citiesList.Add(Cities[intCities[i]]);
+            }
+            return citiesList;
         }
 
         //--------------------------------------
@@ -400,8 +463,8 @@ namespace TSP
             var stopWatch = Stopwatch.StartNew();
             var maxTime = 60000;
             //while pq is not empty, bssf>lb, time is less than 60s, keep running
-            while(agenda.Count != 0 && bssfCost != agenda.First().lowerBound && stopWatch.ElapsedMilliseconds < maxTime) 
-            //while (agenda.Count != 0 && bssfCost > agenda.First().lowerBound) 
+            //while(agenda.Count != 0 && bssfCost != agenda.First().lowerBound && stopWatch.ElapsedMilliseconds < maxTime) 
+            while (agenda.Count != 0 && bssfCost > agenda.First().lowerBound) 
             {
                 if(statesCount < agenda.Count()) {
                     statesCount = agenda.Count();
@@ -417,7 +480,10 @@ namespace TSP
                     foreach (TSPState child in children)
                     {
                         //if no time left, break
-                        if (stopWatch.ElapsedMilliseconds > maxTime) { break; }
+                        //if (stopWatch.ElapsedMilliseconds > maxTime) { break; }
+
+                        //Console.WriteLine("+++++++++++++child cities: " + child.pathSoFar.Count + "++++++++++++++++++");
+                        //Console.WriteLine("++++++++++++++++curr child lower bound: " + child.lowerBound + "+++++++++++++++++");
                         
                         //if child.bound is better than bssf
                         if (child.lowerBound < bssfCost)
@@ -426,12 +492,9 @@ namespace TSP
                             if (child.pathSoFar.Count == Cities.Length)
                             {
                                 //possible new bssf
-                                List<City> citiesList = new List<City>();
-                                for (int i = 0; i < child.pathSoFar.Count; i++ )
-                                {
-                                    //currently incorrect, include adds paths that are not necessarily connected
-                                    citiesList.Add(Cities[child.pathSoFar[i]]);
-                                }
+                                List<int> currCities = getIncludeCities(child.costMatrix);
+                                List<City> citiesList = generateCities(currCities);
+                                
                                 TSPSolution possibleSolution = new TSPSolution(new ArrayList(citiesList));
                                 double newCost = possibleSolution.costOfRoute();
                                 if (newCost < bssfCost)
@@ -454,6 +517,7 @@ namespace TSP
             }
 
             Console.WriteLine("---------------most states at once? " + statesCount);
+            Console.WriteLine("agenda count? " + agenda.Count);
             // update the cost of the tour. 
             Program.MainForm.tbCostOfTour.Text = " " + bssf.costOfRoute();
             //update the time
@@ -463,6 +527,30 @@ namespace TSP
             
         }
 
+        //method to get the list of cities traveled from the cost matrix
+        //since include method doesn't get cities in order, but by 'paths'
+        public List<int> getIncludeCities(double[][] costMatrix)
+        {
+            List<int> cities = new List<int>();
+            
+            //start at city 0
+            int currCity = 0;
+            cities.Add(currCity);
+
+            while(cities.Count != Cities.Length) {
+                for (int i = 0; i < costMatrix.Length; i++ )
+                {
+                    if(double.IsNaN(costMatrix[currCity][i])) {
+                        currCity = i;
+                        cities.Add(i);
+                        break;
+                    }
+                }                    
+            }
+            
+
+            return cities;
+        }
 
         //--------------------------------------
         //method to generate the 2d array ('matrix') that represents a state
@@ -519,7 +607,7 @@ namespace TSP
                     }
                 }
                 //if the whole row is infinite, can't reduce this row
-                if(rowMin == double.PositiveInfinity) {
+                if(double.IsPositiveInfinity(rowMin)) {
                     continue;
                 }
                 for (int j = 0; j < costMatrix[i].Length; j++ )
@@ -542,7 +630,7 @@ namespace TSP
                     }
                 }
                 //if the whole col is infinite, can't reduce this col
-                if (colMin == double.PositiveInfinity)
+                if (double.IsPositiveInfinity(colMin))
                 {
                     continue;
                 }
@@ -560,8 +648,46 @@ namespace TSP
 
         }
 
-        
+        //method to see if city being visited will create a cycle or not
+        public bool isValidCity(int cityFrom, int cityTo, Dictionary<int, int> paths)
+        {
+            if (paths.Count == 0)
+            {
+                return true;
+            }
+            //keep track of how many paths have been checked
+            int count = 0;
+            int tempCityFrom = cityFrom;
+            int tempCityTo = cityTo;
 
+            while(count != paths.Count) {
+                //no path yet from cityTo, no cycle for sure
+                if(!paths.ContainsKey(tempCityTo)) {
+                    return true;
+                }
+                
+                tempCityFrom = paths[tempCityTo];
+                //cycle is created
+                if (tempCityFrom == cityFrom)
+                {
+                    return false;
+                }
+
+                //true if no path from new city from
+                if(!paths.ContainsKey(tempCityFrom)) {
+                    return true;
+                }
+                tempCityTo = paths[tempCityFrom];
+
+                //if cycle created
+                if(tempCityTo == cityFrom) {
+                    return false;
+                }
+                count++;
+            }
+            //probably shouldn't reach the end
+            return true;
+        }
         //--------------------------------------
         //method to generate a list of children states from a parent state
         //--------------------------------------
@@ -581,14 +707,11 @@ namespace TSP
             {
                 for (int j = 0; j < costMatrix[i].Length; j++ )
                 {
-                    //instead of saying only 0, explore other non-infinity fields
-                    if(costMatrix[i][j] == 0)
+                    //instead of saying only 0, explore other non-infinity fields?
+                    //if the value is 0, and that coming from city hasn't already been used nor has going to city
+                    if(costMatrix[i][j] == 0 && isValidCity(i, j, parentState.paths))
                     //if(costMatrix[i][j] != double.PositiveInfinity)
                     {
-                        //if this city is already in the path, skip it
-                        if(parentState.pathSoFar.Contains(i)) {
-                            continue;
-                        }
                         //include
                         TSPState currIncludeState = calcInclude(i, j, parentState);
                         //exclude
@@ -618,34 +741,59 @@ namespace TSP
         public TSPState calcInclude(int row, int col, TSPState parentState)
         {
             double[][] costMatrix = CopyArray(parentState.costMatrix);
+            
             //replace specified row with infinities
+            //it can't go into any other cities
             for (int i = 0; i < costMatrix.Length; i++ )
             {
+                if(double.IsNaN(costMatrix[row][i])) {
+                    Console.WriteLine("should it reach here? 1");
+                    continue;
+                }
                 costMatrix[row][i] = double.PositiveInfinity;
             }
             //replace specified col with infinities
+            //no other cities can enter here
             for (int i = 0; i < costMatrix.Length; i++ )
             {
+                if (double.IsNaN(costMatrix[i][col]))
+                {
+                    Console.WriteLine("should it reach here? 2");
+                    continue;
+                }
                 costMatrix[i][col] = double.PositiveInfinity;
             }
+
+            //the included city gets a special character to retrieve it later
+            costMatrix[row][col] = double.NaN;
 
             //List<City> pathSoFar = parentState.pathSoFar;
             //create new list so it's not referencing old one
             List<int> pathSoFar = new List<int>(parentState.pathSoFar);
             //add currently on city to path
             //pathSoFar.Add(Cities[row]);
+            pathSoFar.Add(col);
 
             //newest city cannot go to any that is already in path so far
             //change those values all to infinites
             for (int i = 0; i < pathSoFar.Count; i++ )
             {
+                if (double.IsNaN(costMatrix[col][pathSoFar[i]]))
+                {
+                    Console.WriteLine("should it reach here? 3 (pretty sure shouldn't be here");
+                    continue;
+                }
                 costMatrix[col][pathSoFar[i]] = double.PositiveInfinity;
             }
-            pathSoFar.Add(col);
-
+            
             double parentLowerBound = parentState.lowerBound;
 
             TSPState childState = new TSPState(costMatrix, parentLowerBound, pathSoFar);
+
+            Dictionary<int, int> paths = new Dictionary<int, int>(parentState.paths);
+            paths.Add(row, col);
+
+            childState.paths = paths;
 
             //reduce
             Tuple<double[][], double> newMatrixInfo = calcReducedCostMatix(childState);
