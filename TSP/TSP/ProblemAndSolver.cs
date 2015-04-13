@@ -433,6 +433,34 @@ namespace TSP
             return citiesList;
         }
 
+        public TSPState testingState()
+        {
+            double[][] costMatrix = new double[Cities.Length][];
+
+            costMatrix[0] = new double[] { double.PositiveInfinity, double.PositiveInfinity, double.PositiveInfinity, double.NaN, double.PositiveInfinity };
+            costMatrix[1] = new double[] { double.PositiveInfinity, double.PositiveInfinity, double.NaN, double.PositiveInfinity, double.PositiveInfinity };
+            costMatrix[2] = new double[] { 0, double.PositiveInfinity, double.PositiveInfinity, double.PositiveInfinity, 0 };
+            costMatrix[3] = new double[] { 0, double.PositiveInfinity, double.PositiveInfinity, double.PositiveInfinity, 157 };
+            costMatrix[4] = new double[] { double.PositiveInfinity, double.NaN, double.PositiveInfinity, double.PositiveInfinity, double.PositiveInfinity };
+
+            Dictionary<int, int> paths = new Dictionary<int, int>();
+            paths.Add(0, 3);
+            paths.Add(1, 2);
+            paths.Add(4, 1);
+
+            List<int> pathSoFar = new List<int>();
+            pathSoFar.Add(3);
+            pathSoFar.Add(2);
+            pathSoFar.Add(1);
+
+            double lowerBound = 2166;
+
+            TSPState init = new TSPState(costMatrix, lowerBound, pathSoFar);
+            init.paths = paths;
+
+            return init;
+        }
+
         //--------------------------------------
         //branch and bound with lazy pruning
         //--------------------------------------
@@ -455,6 +483,9 @@ namespace TSP
             initialState.costMatrix = matrixInfo.Item1;
             initialState.lowerBound = matrixInfo.Item2;
 
+            //add testing hardcoded initial state
+            //TSPState initialState = testingState();
+
             //add the initial state to agenda with its bound
             //agenda.Enqueue(initialState.lowerBound, initialState);
             agenda.Enqueue(initialState, initialState.getPriority());
@@ -463,8 +494,8 @@ namespace TSP
             var stopWatch = Stopwatch.StartNew();
             var maxTime = 60000;
             //while pq is not empty, bssf>lb, time is less than 60s, keep running
-            while(agenda.Count != 0 && bssfCost != agenda.First().lowerBound && stopWatch.ElapsedMilliseconds < maxTime) 
-            //while (agenda.Count != 0 && bssfCost > agenda.First().lowerBound) 
+            //while(agenda.Count != 0 && bssfCost != agenda.First().lowerBound && stopWatch.ElapsedMilliseconds < maxTime) 
+            while (agenda.Count != 0 && bssfCost > agenda.First().lowerBound) 
             {
                 if(statesCount < agenda.Count()) {
                     statesCount = agenda.Count();
@@ -480,7 +511,7 @@ namespace TSP
                     foreach (TSPState child in children)
                     {
                         //if no time left, break
-                        if (stopWatch.ElapsedMilliseconds > maxTime) { break; }
+                        //if (stopWatch.ElapsedMilliseconds > maxTime) { break; }
                         
                         //if child.bound is better than bssf
                         if (child.lowerBound < bssfCost)
@@ -715,7 +746,7 @@ namespace TSP
                         //exclude
                         TSPState currExcludeState = calcExclude(i, j, parentState);
                         //calc bound difference
-                        double currDifference = currExcludeState.lowerBound - currIncludeState.lowerBound;
+                        double currDifference = Math.Abs(currExcludeState.lowerBound - currIncludeState.lowerBound);
                         if(currDifference >= boundDifference) 
                         {
                             //set curr best states
@@ -765,15 +796,15 @@ namespace TSP
 
             //newest city cannot go to any that is already in path so far
             //change those values all to infinites
-            for (int i = 0; i < pathSoFar.Count; i++ )
-            {
-                if (double.IsNaN(costMatrix[col][pathSoFar[i]]))
-                {
-                    //Console.WriteLine("should it reach here? 3 (pretty sure shouldn't be here");
-                    continue;
-                }
-                costMatrix[col][pathSoFar[i]] = double.PositiveInfinity;
-            }
+            //for (int i = 0; i < pathSoFar.Count; i++ )
+            //{
+            //    if (double.IsNaN(costMatrix[col][pathSoFar[i]]))
+            //    {
+            //        //Console.WriteLine("should it reach here? 3 (pretty sure shouldn't be here");
+            //        continue;
+            //    }
+            //    costMatrix[col][pathSoFar[i]] = double.PositiveInfinity;
+            //}
             
             double parentLowerBound = parentState.lowerBound;
 
