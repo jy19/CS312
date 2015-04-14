@@ -262,15 +262,11 @@ namespace TSP
         /// </summary>
         /// 
 
-        
-        //PriorityQueue<double, TSPState> agenda;
-
         //priority queue of states for the agenda, based on lower bound
         //source: https://bitbucket.org/BlueRaja/high-speed-priority-queue-for-c/wiki/Home
         HeapPriorityQueue<TSPState> agenda;
         const int MAX_STATES = 200000;
         double bssfCost; //bssf that's not an object
-        //double lowerBound; //the curr lower bound
 
         //some functions to help split an array
         //source: http://stackoverflow.com/questions/1841246/c-sharp-splitting-an-array/1841276#1841276
@@ -290,17 +286,6 @@ namespace TSP
             Split(array, array.Length / 2, out first, out second);
         }
 
-
-        //public void recSplit(City[] currCities, City[] cities1, City[] cities2)
-        //{
-        //    //split by half
-        //    SplitMidPoint(currCities, out cities1, out cities2);
-        //    //sort by y
-        //    Array.Sort(cities1, delegate(City x, City y) { return x.Y.CompareTo(y.Y); });
-        //    Array.Sort(cities2, delegate(City x, City y) { return x.Y.CompareTo(y.Y); });
-        //    Array.Reverse(cities2);
-        //}
-
         public City[] sortByX(City[] cities)
         {
             Array.Sort(cities, delegate(City x, City y) { return x.X.CompareTo(y.X); });
@@ -318,14 +303,11 @@ namespace TSP
             //copy array to make changes to
             City[] copyCities = new City[Cities.Length];
             Array.Copy(Cities, copyCities, Cities.Length);
-            //Array.Sort(copyCities, delegate(City x, City y) { return x.X.CompareTo(y.X); });
             copyCities = sortByX(copyCities);
             City[] cities1 = new City[Cities.Length / 2];
             City[] cities2 = new City[Cities.Length - cities1.Length];
             SplitMidPoint(copyCities, out cities1, out cities2);
             //sort by y
-            //Array.Sort(cities1, delegate(City x, City y) { return x.Y.CompareTo(y.Y); });
-            //Array.Sort(cities2, delegate(City x, City y) { return x.Y.CompareTo(y.Y); });
             cities1 = sortByY(cities1);
             cities2 = sortByY(cities2);
             //split those again
@@ -347,8 +329,6 @@ namespace TSP
 
             //concat all the arrays
             var allCities = new City[Cities.Length];
-            //cities1.CopyTo(allCities, 0);
-            //cities2.CopyTo(allCities, cities1.Length);
             cities1_1.CopyTo(allCities, 0);
             cities2_1.CopyTo(allCities, cities1_1.Length);
             cities2_2.CopyTo(allCities, (cities1_1.Length + cities2_1.Length));
@@ -364,10 +344,6 @@ namespace TSP
 
 
             return tempRoute;
-            ////set the current bssf
-            //bssf = new TSPSolution(Route);
-            ////set the current bssf cost
-            //bssfCost = bssf.costOfRoute();
         }
 
         //greedy algorithm using nearest neighbors
@@ -407,54 +383,6 @@ namespace TSP
             return tempRoute;
         }
 
-        ////greedy algorithm using nearest neighbors
-        //public ArrayList nearestNeighbor()
-        //{
-        //    ArrayList bestRoute = new ArrayList();
-        //    double bestCost = double.MaxValue;
-
-        //    //try starting at all indexes and choose best route
-        //    for(int currIndex = 0; currIndex < Cities.Length; currIndex++) {
-        //        //temp list to store route
-        //        List<int> tempRoute = new List<int>();
-        //        //run until all index visited, or in this case when route length == cities length
-        //        while (tempRoute.Count < Cities.Length)
-        //        {
-        //            //shortest edge connecting current index to an unvisited index v
-        //            double minCost = double.MaxValue;
-        //            int cityToAdd = 0;
-        //            for (int i = 0; i < Cities.Length; i++)
-        //            {
-        //                if (!tempRoute.Contains(i))
-        //                {
-        //                    //calc cost from currIndex city to this city
-        //                    double currCost = Cities[currIndex].costToGetTo(Cities[i]);
-        //                    if (currCost < minCost)
-        //                    {
-        //                        minCost = currCost;
-        //                        cityToAdd = i;
-        //                    }
-        //                }
-        //            }
-        //            //mark city as visited
-        //            tempRoute.Add(cityToAdd);
-        //            //set current index to v
-        //            currIndex = cityToAdd;
-
-        //        }
-        //        //check the current route's bssf
-        //        ArrayList currRoute = new ArrayList(generateCities(tempRoute));
-        //        TSPSolution currSol = new TSPSolution(new ArrayList(generateCities(tempRoute)));
-        //        double currbssf = currSol.costOfRoute();
-        //        if(currbssf < bestCost) {
-        //            bestCost = currbssf;
-        //            bestRoute = new ArrayList(currRoute);
-        //        }
-        //    }
-
-        //    return bestRoute;
-        //}
-
         public void solveProblem()
         {
             Route = new ArrayList();
@@ -479,13 +407,9 @@ namespace TSP
                 bssf = posbssf2;
                 bssfCost = route2Cost;
             }
-            //bssf = new TSPSolution(nearestNeighbor());
-            //bssfCost = bssf.costOfRoute();
 
             //initialize stuff
-            //agenda = new PriorityQueue<double,TSPState>();
             agenda = new HeapPriorityQueue<TSPState>(MAX_STATES);
-            //lowerBound = 0;
 
             Console.WriteLine("-----------bssf cost: " + bssfCost + "-------------");
 
@@ -544,18 +468,13 @@ namespace TSP
             initialState.costMatrix = matrixInfo.Item1;
             initialState.lowerBound = matrixInfo.Item2;
 
-            //add testing hardcoded initial state
-            //TSPState initialState = testingState();
-
             //add the initial state to agenda with its bound
-            //agenda.Enqueue(initialState.lowerBound, initialState);
             agenda.Enqueue(initialState, initialState.getPriority());
 
             //use stopwatch for time
             var stopWatch = Stopwatch.StartNew();
             var maxTime = 60000;
             //while pq is not empty, bssf>lb, time is less than 60s, keep running
-
             while (agenda.Count != 0 && bssfCost != agenda.First().lowerBound && stopWatch.ElapsedMilliseconds < maxTime)
             //while (agenda.Count != 0 && bssfCost > agenda.First().lowerBound) 
             {
@@ -609,7 +528,6 @@ namespace TSP
             Console.WriteLine("---------------most states at once? " + statesCount);
             Console.WriteLine("---------------json string of bssf ----------------------");
             Console.WriteLine(bssf.ToString());
-            //Console.WriteLine("agenda count? " + agenda.Count);
             // update the cost of the tour. 
             Program.MainForm.tbCostOfTour.Text = " " + bssf.costOfRoute();
             //update the time
@@ -735,9 +653,6 @@ namespace TSP
 
             return Tuple.Create(costMatrix, lb);
 
-            //state.lowerBound = lb;
-            //state.costMatrix = costMatrix;
-
         }
 
         //method to see if city being visited will create a cycle or not
@@ -778,7 +693,7 @@ namespace TSP
                 }
                 count++;
             }
-            //probably shouldn't reach the end
+            
             return true;
         }
         //--------------------------------------
@@ -851,24 +766,10 @@ namespace TSP
             //the included city gets a special character to retrieve it later
             costMatrix[row][col] = double.NaN;
 
-            //List<City> pathSoFar = parentState.pathSoFar;
             //create new list so it's not referencing old one
             List<int> pathSoFar = new List<int>(parentState.pathSoFar);
             //add currently on city to path
-            //pathSoFar.Add(Cities[row]);
             pathSoFar.Add(col);
-
-            //newest city cannot go to any that is already in path so far
-            //change those values all to infinites
-            //for (int i = 0; i < pathSoFar.Count; i++ )
-            //{
-            //    if (double.IsNaN(costMatrix[col][pathSoFar[i]]))
-            //    {
-            //        //Console.WriteLine("should it reach here? 3 (pretty sure shouldn't be here");
-            //        continue;
-            //    }
-            //    costMatrix[col][pathSoFar[i]] = double.PositiveInfinity;
-            //}
             
             double parentLowerBound = parentState.lowerBound;
 
@@ -892,7 +793,6 @@ namespace TSP
         public TSPState calcExclude(int row, int col, TSPState parentState)
         {
             double[][] costMatrix = CopyArray(parentState.costMatrix);
-            //List<City> pathSoFar = parentState.pathSoFar;
             //create new list so it's not referencing old one
             List<int> pathSoFar = new List<int>(parentState.pathSoFar);
 
