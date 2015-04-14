@@ -371,23 +371,27 @@ namespace TSP
         }
 
         //greedy algorithm using nearest neighbors
-        public List<int> nearestNeighbor() {
+        public List<int> nearestNeighbor()
+        {
 
             //arbitrary index as current index (i'll start at 0)
             int currIndex = 0;
             //temp list to store route
             List<int> tempRoute = new List<int>();
             //run until all index visited, or in this case when route length == cities length
-            while(tempRoute.Count < Cities.Length) { 
+            while (tempRoute.Count < Cities.Length)
+            {
                 //shortest edge connecting current index to an unvisited index v
                 double minCost = double.MaxValue;
                 int cityToAdd = 0;
-                for (int i = 0; i < Cities.Length; i++ )
+                for (int i = 0; i < Cities.Length; i++)
                 {
-                    if(!tempRoute.Contains(i)) {
+                    if (!tempRoute.Contains(i))
+                    {
                         //calc cost from currIndex city to this city
                         double currCost = Cities[currIndex].costToGetTo(Cities[i]);
-                        if(currCost < minCost) {
+                        if (currCost < minCost)
+                        {
                             minCost = currCost;
                             cityToAdd = i;
                         }
@@ -397,15 +401,63 @@ namespace TSP
                 tempRoute.Add(cityToAdd);
                 //set current index to v
                 currIndex = cityToAdd;
-               
+
             }
 
             return tempRoute;
         }
 
+        ////greedy algorithm using nearest neighbors
+        //public ArrayList nearestNeighbor()
+        //{
+        //    ArrayList bestRoute = new ArrayList();
+        //    double bestCost = double.MaxValue;
+
+        //    //try starting at all indexes and choose best route
+        //    for(int currIndex = 0; currIndex < Cities.Length; currIndex++) {
+        //        //temp list to store route
+        //        List<int> tempRoute = new List<int>();
+        //        //run until all index visited, or in this case when route length == cities length
+        //        while (tempRoute.Count < Cities.Length)
+        //        {
+        //            //shortest edge connecting current index to an unvisited index v
+        //            double minCost = double.MaxValue;
+        //            int cityToAdd = 0;
+        //            for (int i = 0; i < Cities.Length; i++)
+        //            {
+        //                if (!tempRoute.Contains(i))
+        //                {
+        //                    //calc cost from currIndex city to this city
+        //                    double currCost = Cities[currIndex].costToGetTo(Cities[i]);
+        //                    if (currCost < minCost)
+        //                    {
+        //                        minCost = currCost;
+        //                        cityToAdd = i;
+        //                    }
+        //                }
+        //            }
+        //            //mark city as visited
+        //            tempRoute.Add(cityToAdd);
+        //            //set current index to v
+        //            currIndex = cityToAdd;
+
+        //        }
+        //        //check the current route's bssf
+        //        ArrayList currRoute = new ArrayList(generateCities(tempRoute));
+        //        TSPSolution currSol = new TSPSolution(new ArrayList(generateCities(tempRoute)));
+        //        double currbssf = currSol.costOfRoute();
+        //        if(currbssf < bestCost) {
+        //            bestCost = currbssf;
+        //            bestRoute = new ArrayList(currRoute);
+        //        }
+        //    }
+
+        //    return bestRoute;
+        //}
+
         public void solveProblem()
         {
-            Route = new ArrayList(); 
+            Route = new ArrayList();
             // use the greedy algo
             Route = greedySolution();
             List<int> Route2 = nearestNeighbor();
@@ -427,17 +479,38 @@ namespace TSP
                 bssf = posbssf2;
                 bssfCost = route2Cost;
             }
+            //bssf = new TSPSolution(nearestNeighbor());
+            //bssfCost = bssf.costOfRoute();
 
             //initialize stuff
             //agenda = new PriorityQueue<double,TSPState>();
             agenda = new HeapPriorityQueue<TSPState>(MAX_STATES);
             //lowerBound = 0;
 
-            //Console.WriteLine("-----------bssf cost: " + bssfCost + "-------------");
+            Console.WriteLine("-----------bssf cost: " + bssfCost + "-------------");
+
+            //run baseline algo
+            //baseLine();
 
             //run branch and bound
             branchAndBound();
         }
+
+        public void baseLine()
+        {
+            Stopwatch stopWatch = Stopwatch.StartNew();
+            List<int> greedyRoute = nearestNeighbor();
+            ArrayList route = new ArrayList(generateCities(greedyRoute));
+
+            bssf = new TSPSolution(route);
+
+            Program.MainForm.tbCostOfTour.Text = " " + bssf.costOfRoute();
+            //update the time
+            Program.MainForm.tbElapsedTime.Text = " " + (stopWatch.ElapsedMilliseconds) / 1000.0 + "s";
+            // do a refresh. 
+            Program.MainForm.Invalidate();
+        }
+
 
         //helper function to generate list of City from list of int city positions
         public List<City> generateCities(List<int> intCities) {
